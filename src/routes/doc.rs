@@ -31,8 +31,8 @@ impl Modify for SecurityAddon {
 #[derive(OpenApi)]
 #[openapi(
     info(
-        title = "SK Actix Web Example",
-        description = "Actix Web Template for Suankularb Wittayalai School related web service",
+        title = "SK Shopping API",
+        description = "An API to interact with the SK Shopping App",
     ),
     paths(health_check),
     components(schemas(HealthCheckResponse)),
