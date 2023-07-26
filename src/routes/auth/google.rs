@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 use crate::{
     models::auth::{
-        oauth::{get_google_user, request_token, OAuthRequest, TokenClaims},
+        oauth::{get_google_user, request_token, verify_id_token, OAuthRequest, TokenClaims},
         user::User,
     },
     AppState,
@@ -35,25 +35,16 @@ async fn google_oauth_handler(
     // decode id_token to get google user info with jwt and get access_token and verify it with google secret
     // let google_user = jsonwebtoken::decode(&id_token, key, validation)
 
-    let google_user = get_google_user(&token_response.access_token, &token_response.id_token).await;
-    if google_user.is_err() {
-        let message = match google_user.err() {
-            Some(err) => err.to_string(),
-            None => "Failed to get google user".to_owned(),
-        };
-        return HttpResponse::BadGateway()
-            .json(serde_json::json!({"status": "fail", "message": message}));
-    }
-
-    let google_user = match google_user {
-        Ok(user) => user,
+    let google_id_data = match verify_id_token(&id_token, &data.env).await {
+        Ok(data) => data,
         Err(err) => {
-            return HttpResponse::BadGateway()
-                .json(serde_json::json!({"status": "fail", "message": err.to_string()}))
+            // dbg!(err);
+            return HttpResponse::Unauthorized()
+                .json(serde_json::json!({"status": "fail", "message": err.to_string()}));
         }
     };
 
-    dbg!(google_user);
+    dbg!(google_id_data);
 
     // let mut vec = data.db.lock().unwrap();
     // let email = google_user.email.to_lowercase();
