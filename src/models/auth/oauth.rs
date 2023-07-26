@@ -12,9 +12,8 @@ pub struct TokenClaims {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct QueryCode {
-    pub code: String,
-    pub state: String,
+pub struct OAuthRequest {
+    pub credential: String,
 }
 
 #[derive(Deserialize)]
@@ -23,7 +22,7 @@ pub struct OAuthResponse {
     pub id_token: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct GoogleUserResult {
     pub id: String,
     pub email: String,
@@ -36,7 +35,7 @@ pub struct GoogleUserResult {
 }
 
 pub async fn request_token(
-    authorization_code: &str,
+    id_token: &str,
     data: &web::Data<AppState>,
 ) -> Result<OAuthResponse, Box<dyn Error>> {
     let redirect_url = data.env.google_oauth_redirect_url.to_owned();
@@ -48,10 +47,10 @@ pub async fn request_token(
 
     let params = [
         ("grant_type", "authorization_code"),
-        ("redirect_uri", redirect_url.as_str()),
         ("client_id", client_id.as_str()),
-        ("code", authorization_code),
         ("client_secret", client_secret.as_str()),
+        ("redirect_uri", redirect_url.as_str()),
+        ("code", id_token),
     ];
     let response = client.post(root_url).form(&params).send().await?;
 
@@ -59,7 +58,7 @@ pub async fn request_token(
         let oauth_response = response.json::<OAuthResponse>().await?;
         Ok(oauth_response)
     } else {
-        let message = "An error occurred while trying to retrieve access token.";
+        let message = response.text().await?;
         Err(From::from(message))
     }
 }
@@ -84,3 +83,24 @@ pub async fn get_google_user(
         Err(From::from(message))
     }
 }
+
+struct TokenPayload {
+    // Add fields here as needed to capture the claims from the ID token
+    // For example: iss, aud, exp, sub, email, etc.
+    aud: String,
+    azp: String,
+    email: String,
+    email_verified: bool,
+    exp: usize,
+    given_name: String,
+    family_name: String,
+    iat: usize,
+    iss: String,
+    jti: String,
+    name: String,
+    nbf: usize,
+    picture: String,
+    sub: String,
+}
+
+fn verify_id_token(id_token: &str) -> Result<TokenPayload, String> {}

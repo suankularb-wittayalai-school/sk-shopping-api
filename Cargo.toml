@@ -20,4 +20,6 @@ serde= "1.0.164"
 serde_json = "1.0.64"
 chrono = { version = "0.4.19", features = ["serde"] }
 reqwest = { version = "0.11.4", features = ["json"] }
+jsonwebtoken = "8.3.0"
+uuid = { version = "0.8.2", features = ["serde", "v4"] }
 mysk-lib={ git= "https://github.com/suankularb-wittayalai-school/mysk-api.git", branch = "main" }
