@@ -6,11 +6,14 @@ use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use std::env;
 
+mod lib;
+mod models;
 mod routes;
 
 pub struct AppState {
     db: Pool<Postgres>,
     jwt_secret: String,
+    env: lib::common::config::Config,
 }
 
 #[actix_web::main]
@@ -67,6 +70,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(AppState {
                 db: pool.clone(),
                 jwt_secret: jwt_secret.clone(),
+                env: lib::common::config::Config::init(),
             }))
             // .service(web::scope("/api/v1").configure(routes::config))
             .configure(routes::config)
