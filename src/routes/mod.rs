@@ -11,6 +11,7 @@ use doc::ApiDoc;
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(health::health_check);
     cfg.service(auth::google::google_oauth_handler);
+    cfg.service(auth::user::get_user);
     cfg.service(
         SwaggerUi::new("/swagger-ui/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
     );

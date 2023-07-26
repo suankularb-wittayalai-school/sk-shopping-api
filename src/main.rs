@@ -6,13 +6,13 @@ use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use std::env;
 
-mod lib;
 mod models;
 mod routes;
+mod utils;
 
 pub struct AppState {
     db: Pool<Postgres>,
-    env: lib::common::config::Config,
+    env: utils::common::config::Config,
 }
 
 #[actix_web::main]
@@ -67,7 +67,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(AppState {
                 db: pool.clone(),
-                env: lib::common::config::Config::init(),
+                env: utils::common::config::Config::init(),
             }))
             // .service(web::scope("/api/v1").configure(routes::config))
             .configure(routes::config)
