@@ -12,7 +12,6 @@ mod routes;
 
 pub struct AppState {
     db: Pool<Postgres>,
-    jwt_secret: String,
     env: lib::common::config::Config,
 }
 
@@ -25,7 +24,6 @@ async fn main() -> std::io::Result<()> {
     env_logger::init();
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let jwt_secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set");
 
     let pool = match PgPoolOptions::new()
         .max_connections(5)
@@ -69,7 +67,6 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(AppState {
                 db: pool.clone(),
-                jwt_secret: jwt_secret.clone(),
                 env: lib::common::config::Config::init(),
             }))
             // .service(web::scope("/api/v1").configure(routes::config))
