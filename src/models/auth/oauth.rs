@@ -10,11 +10,6 @@ pub struct TokenClaims {
     pub exp: usize,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct OAuthRequest {
-    pub credential: String,
-}
-
 #[derive(Deserialize)]
 pub struct OAuthResponse {
     pub access_token: String,

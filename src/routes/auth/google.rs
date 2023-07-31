@@ -5,17 +5,21 @@ use actix_web::{
 use chrono::{prelude::*, Duration};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use mysk_lib::models::common::response::{ErrorResponseType, ErrorType, ResponseType};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
     models::auth::{
-        oauth::{verify_id_token, GoogleUserResult, OAuthRequest, TokenClaims},
+        oauth::{verify_id_token, GoogleUserResult, TokenClaims},
         user::UserTable,
     },
     AppState,
 };
 
+#[derive(Debug, Deserialize)]
+pub struct OAuthRequest {
+    pub credential: String,
+}
 #[derive(Debug, Serialize)]
 struct GoogleTokenResponse {
     access_token: String,
@@ -25,7 +29,7 @@ struct GoogleTokenResponse {
     id_token: String,
 }
 
-#[post("/auth/sessions/oauth/google")]
+#[post("/auth/oauth/google")]
 async fn google_oauth_handler(
     data: web::Data<AppState>,
     query: web::Json<OAuthRequest>,
@@ -50,8 +54,6 @@ async fn google_oauth_handler(
     }
 
     // decode id_token to get google user info with jwt and get access_token and verify it with google secret
-    // let google_user = jsonwebtoken::decode(&id_token, key, validation)
-
     let google_id_data = match verify_id_token(&id_token, &data.env).await {
         Ok(data) => data,
         Err(err) => {
@@ -70,11 +72,7 @@ async fn google_oauth_handler(
 
     let google_user = GoogleUserResult::from_token_payload(google_id_data);
 
-    dbg!(&google_user);
-
-    // let mut vec = data.db.lock().unwrap();
-    // let email = google_user.email.to_lowercase();
-    // let user = vec.iter_mut().find(|user| user.email == email);
+    // dbg!(&google_user);
 
     let user = UserTable::get_by_email(&data.db, &google_user.email).await;
 
