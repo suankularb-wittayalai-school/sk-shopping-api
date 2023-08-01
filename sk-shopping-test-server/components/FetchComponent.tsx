@@ -34,15 +34,16 @@ export default function FetchComponent({
 
   async function sendRequest() {
     setLoading(true);
+
     const response = await fetchAPI(
       path,
-      JSON.parse(query),
+      query.length > 0 ? JSON.parse(query) : undefined,
       {
         method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: body ? JSON.parse(body) : undefined,
+        body: body.length > 0 ? JSON.parse(body) : undefined,
       },
       accessToken
     );
