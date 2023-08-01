@@ -47,7 +47,7 @@ async fn google_oauth_handler(
                 code: 500,
                 detail: "id_token is empty".to_owned(),
                 error_type: "invalid_token".to_owned(),
-                source: "/auth/sessions/oauth/google".to_owned(),
+                source: "/auth/oauth/google".to_owned(),
             },
             None,
         ));
@@ -63,7 +63,7 @@ async fn google_oauth_handler(
                     code: 500,
                     detail: err,
                     error_type: "invalid_token".to_owned(),
-                    source: "/auth/sessions/oauth/google".to_owned(),
+                    source: "/auth/oauth/google".to_owned(),
                 },
                 None,
             ));

@@ -72,7 +72,7 @@ const Contexts: FC<{ children: ReactNode }> = ({ children }) => {
   );
 };
 
-function App({ Component, pageProps }: CustomAppProps) {
+function App({ Component, pageProps: { ...pageProps } }: CustomAppProps) {
   const { fab, pageHeader, childURLs } = Component;
 
   return (

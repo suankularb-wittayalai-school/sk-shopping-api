@@ -15,9 +15,15 @@ import {
 
 // Types
 import { CustomPage, LangCode } from "@/utils/types";
+import { useSession } from "next-auth/react";
+import useUser from "@/utils/helpers/useUser";
 
 // Page
 const IndexPage: CustomPage = () => {
+  const { user, accessToken, status } = useUser();
+
+  // console.log(data);
+
   return (
     <>
       <Head>
@@ -27,6 +33,9 @@ const IndexPage: CustomPage = () => {
         <Section>
           {/* <Header>{t("welcome.title")}</Header>
           <p className="skc-body-medium">{t("welcome.desc")}</p> */}
+          {status === "loading" && <p>Loading...</p>}
+          {status === "unauthenticated" && <p>Not Logged in</p>}
+          {status === "authenticated" && <p>Logged in as {user?.username}</p>}
         </Section>
       </ContentLayout>
     </>
@@ -35,13 +44,13 @@ const IndexPage: CustomPage = () => {
 
 export const getStaticProps = async ({ locale }: { locale: LangCode }) => ({
   props: {
-    ...(await serverSideTranslations(locale, ["common", "home"])),
+    ...(await serverSideTranslations(locale, ["common"])),
   },
 });
 
-// IndexPage.pageHeader = {
-//   title: { key: "title", ns: "home" },
-//   // icon: <MaterialIcon icon="waving_hand" />,
-// };
+IndexPage.pageHeader = {
+  title: "SK Shopping Test Server",
+  // icon: <MaterialIcon icon="waving_hand" />,
+};
 
 export default IndexPage;

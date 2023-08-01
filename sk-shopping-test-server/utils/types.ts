@@ -54,3 +54,32 @@ export type CustomAppProps = {
   Component: CustomPage;
   pageProps: AppProps["pageProps"];
 };
+
+/**
+ * An error object returned from the Club Registry API.
+ */
+export type APIError = {
+  id: string;
+  code: number;
+  error_type: string;
+  detail: string;
+  source: string;
+};
+
+/**
+ * A string that supports Thai and English, with the latter being optional.
+ */
+export type MultiLangString = {
+  th: string;
+  "en-US"?: string;
+};
+
+export type User = {
+  id: string;
+  username: string;
+  email: string;
+  profile?: string;
+  first_name?: string;
+  last_name?: string;
+  created_at?: string;
+};

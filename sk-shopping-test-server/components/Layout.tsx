@@ -28,6 +28,7 @@ import Favicon from "@/components/Favicon";
 import { usePageIsLoading } from "@/utils/routing";
 import { useSnackbar } from "@/utils/snackbar";
 import { CustomPage } from "@/utils/types";
+import GoogleOneTap from "@/components/GoogleOneTap";
 
 const Layout: FC<
   { children: ReactNode } & Pick<CustomPage, "fab" | "pageHeader" | "childURLs">
@@ -135,6 +136,8 @@ const Layout: FC<
 
       {/* Content */}
       {children}
+
+      <GoogleOneTap />
     </RootLayout>
   );
 };
