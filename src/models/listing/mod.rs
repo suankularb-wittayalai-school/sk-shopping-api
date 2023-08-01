@@ -2,7 +2,7 @@ use chrono::NaiveDateTime;
 use mysk_lib::models::common::requests::FetchLevel;
 use serde::{Deserialize, Serialize};
 
-use super::{item::Item, shop::Shop};
+use super::{collection::Collection, item::Item, shop::Shop};
 
 pub(crate) mod db;
 
@@ -53,8 +53,7 @@ pub struct DetailedListing {
     pub lifetime_stock: i64,
     pub amount_sold: i64,
     pub variants: Vec<Item>,
-    // TODO: implement this once collections are implemented
-    // pub collections: Vec<Collection>,
+    pub collections: Vec<Collection>,
 }
 
 impl From<db::ListingTable> for IdOnlyListing {
@@ -145,6 +144,7 @@ impl DetailedListing {
             lifetime_stock: 0,
             amount_sold: 0,
             variants: vec![],
+            collections: vec![],
         })
     }
 }

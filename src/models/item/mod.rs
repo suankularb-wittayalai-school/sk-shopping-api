@@ -2,7 +2,7 @@ use chrono::NaiveDateTime;
 use mysk_lib::models::common::requests::FetchLevel;
 use serde::{Deserialize, Serialize};
 
-use super::{listing::Listing, shop::Shop};
+use super::{collection::Collection, listing::Listing, shop::Shop};
 
 pub(crate) mod db;
 
@@ -54,8 +54,7 @@ pub struct DetailedItem {
     pub description: String,
     pub shop: Shop,
     pub listing: Listing,
-    // TODO: implement this once collections are implemented
-    // pub collection: Collection,
+    pub collection: Collection,
 }
 
 impl From<db::ItemTable> for IdOnlyItem {
@@ -144,6 +143,13 @@ impl DetailedItem {
             listing: Listing::from_table(
                 pool,
                 super::listing::db::ListingTable::default(),
+                descendant_fetch_level,
+                Some(&FetchLevel::IdOnly),
+            )
+            .await?,
+            collection: Collection::from_table(
+                pool,
+                super::collection::db::CollectionTable::default(),
                 descendant_fetch_level,
                 Some(&FetchLevel::IdOnly),
             )

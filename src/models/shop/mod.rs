@@ -3,7 +3,7 @@ use std::vec;
 use mysk_lib::models::common::{requests::FetchLevel, string::MultiLangString};
 use serde::{Deserialize, Serialize};
 
-use super::{item::Item, listing::Listing};
+use super::{collection::Collection, item::Item, listing::Listing};
 
 pub(crate) mod db;
 
@@ -50,8 +50,7 @@ pub struct DetailedShop {
     pub promptpay_number: Option<String>,
     pub accept_cod: bool,
     pub listings: Vec<Listing>,
-    // TODO: implement this once collections are implemented
-    //  pub collections: Vec<Collection>,
+    pub collections: Vec<Collection>,
     pub items: Vec<Item>,
 }
 
@@ -112,6 +111,7 @@ impl DetailedShop {
             // TODO: get listings and items from db
             items: vec![],
             listings: vec![],
+            collections: vec![],
         })
     }
 }
