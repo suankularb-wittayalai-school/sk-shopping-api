@@ -54,7 +54,7 @@ export default function FetchComponent({
   return (
     <>
       <Section>
-        <Header>Fetch Component</Header>
+        <Header>API Fetcher</Header>
         <Columns columns={4}>
           <TextField<string>
             appearance="outlined"
