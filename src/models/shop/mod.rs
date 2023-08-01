@@ -1,5 +1,9 @@
+use std::vec;
+
 use mysk_lib::models::common::{requests::FetchLevel, string::MultiLangString};
 use serde::{Deserialize, Serialize};
+
+use super::{item::Item, listing::Listing};
 
 pub(crate) mod db;
 
@@ -45,10 +49,10 @@ pub struct DetailedShop {
     pub accept_promptpay: bool,
     pub promptpay_number: Option<String>,
     pub accept_cod: bool,
-    // TODO: Add listings after listings are implemented
-    //  pub listings: Vec<Listing>,
+    pub listings: Vec<Listing>,
+    // TODO: implement this once collections are implemented
     //  pub collections: Vec<Collection>,
-    //  pub items: Vec<Item>,
+    pub items: Vec<Item>,
 }
 
 impl From<db::ShopTable> for IdOnlyShop {
@@ -92,8 +96,8 @@ impl DetailedShop {
         pool: &sqlx::PgPool,
         shop: db::ShopTable,
         descendant_fetch_level: Option<&FetchLevel>,
-    ) -> Self {
-        Self {
+    ) -> Result<Self, sqlx::Error> {
+        Ok(Self {
             id: shop.id,
             name: MultiLangString::new(shop.name_en, shop.name_th),
             accent_color: shop.accent_color,
@@ -105,7 +109,10 @@ impl DetailedShop {
             accept_promptpay: shop.accept_promptpay,
             promptpay_number: shop.promptpay_number,
             accept_cod: shop.accept_cod,
-        }
+            // TODO: get listings and items from db
+            items: vec![],
+            listings: vec![],
+        })
     }
 }
 
@@ -123,15 +130,15 @@ impl Shop {
         shop: db::ShopTable,
         level: Option<&FetchLevel>,
         descendant_fetch_level: Option<&FetchLevel>,
-    ) -> Self {
+    ) -> Result<Self, sqlx::Error> {
         match level {
-            Some(FetchLevel::IdOnly) => Self::IdOnly(shop.into()),
-            Some(FetchLevel::Compact) => Self::Compact(shop.into()),
-            Some(FetchLevel::Default) => Self::Default(shop.into()),
-            Some(FetchLevel::Detailed) => {
-                Self::Detailed(DetailedShop::from_table(pool, shop, descendant_fetch_level).await)
-            }
-            None => Self::Default(shop.into()),
+            Some(FetchLevel::IdOnly) => Ok(Self::IdOnly(shop.into())),
+            Some(FetchLevel::Compact) => Ok(Self::Compact(shop.into())),
+            Some(FetchLevel::Default) => Ok(Self::Default(shop.into())),
+            Some(FetchLevel::Detailed) => Ok(Self::Detailed(
+                DetailedShop::from_table(pool, shop, descendant_fetch_level).await?,
+            )),
+            None => Ok(Self::Default(shop.into())),
         }
     }
 }
