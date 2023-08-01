@@ -13,6 +13,7 @@ import {
   Select,
   TextField,
 } from "@suankularb-components/react";
+import { set } from "date-fns";
 import { useState } from "react";
 
 export default function FetchComponent({
@@ -24,6 +25,8 @@ export default function FetchComponent({
   const [method, setMethod] = useState<
     "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
   >("GET");
+  const [body, setBody] = useState<string>("");
+  const [query, setQuery] = useState<string>("");
 
   const [returnResponse, setReturnResponse] = useState<string>("");
 
@@ -33,12 +36,13 @@ export default function FetchComponent({
     setLoading(true);
     const response = await fetchAPI(
       path,
-      undefined,
+      JSON.parse(query),
       {
         method,
         headers: {
           "Content-Type": "application/json",
         },
+        body: body ? JSON.parse(body) : undefined,
       },
       accessToken
     );
@@ -48,14 +52,14 @@ export default function FetchComponent({
 
   // render a text box to enter path
   // render a dropdown to select method
-  // render a text box to enter body (if method is POST or PUT or PATCH)
+  // render a text box to enter body (if method is POST or PUT or PATCH pass it as a body to fetchAPI but if method is GET or DELETE pass it as a query string to fetchAPI)
   // render a button to send request
   // render a text box to display response as formatted json
   return (
     <>
       <Section>
         <Header>API Fetcher</Header>
-        <Columns columns={4}>
+        <Columns columns={4} className="!gap-y-8">
           <TextField<string>
             appearance="outlined"
             label="Path"
@@ -80,8 +84,46 @@ export default function FetchComponent({
             <MenuItem value="PATCH">PATCH</MenuItem>
             <MenuItem value="DELETE">DELETE</MenuItem>
           </Select>
+
+          {method !== "GET" && method !== "DELETE" && (
+            <TextField<string>
+              appearance="outlined"
+              label="Request Body"
+              behavior="textarea"
+              helperMsg="Enter request body in JSON format"
+              value={body ? JSON.stringify(body) : ""}
+              onChange={setBody}
+              className="col-span-4"
+            />
+          )}
+          {(method === "GET" || method === "DELETE") && (
+            <TextField<string>
+              appearance="outlined"
+              label="Query String"
+              behavior="textarea"
+              helperMsg="Enter query string in JSON format"
+              value={query ? query.toString() : ""}
+              onChange={setQuery}
+              className="col-span-4"
+            />
+          )}
         </Columns>
         <Actions>
+          {/* {// a button to beautify the json} */}
+          <Button
+            onClick={() => {
+              if (method === "GET" || method === "DELETE") {
+                setQuery(JSON.stringify(JSON.parse(query), null, 2));
+              }
+              if (method !== "GET" && method !== "DELETE") {
+                setBody(JSON.stringify(JSON.parse(body), null, 2));
+              }
+            }}
+            appearance="filled"
+            className="!margin-12"
+          >
+            Beautify JSON
+          </Button>
           <Button
             onClick={sendRequest}
             appearance="filled"
