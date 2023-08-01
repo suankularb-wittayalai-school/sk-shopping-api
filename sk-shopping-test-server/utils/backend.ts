@@ -19,32 +19,13 @@ export async function fetchAPI<Data extends {} = {}>(
   query?: {},
   options?: RequestInit,
   sessionToken?: string
-): Promise<{
-  api_version: string;
-  data: Data;
-  error: APIError | null;
-  meta: null;
-}> {
-  // console.log("fetchAPI", {
-  //   url: sift([
-  //     process.env.NEXT_PUBLIC_API_URL,
-  //     path,
-  //     query && "?" + qs.stringify(query, { encode: false }),
-  //   ]).join(""),
-  //   option: options
-  //     ? {
-  //         ...options,
-  //         ...(sessionToken
-  //           ? {
-  //               headers: {
-  //                 ...options.headers,
-  //                 Authorization: `Bearer ${sessionToken}`,
-  //               },
-  //             }
-  //           : {}),
-  //       }
-  //     : undefined,
-  // });
+): Promise<
+  {
+    api_version: string;
+
+    meta: null;
+  } & ({ data: Data; error: null } | { data: null; error: APIError })
+> {
   let res = await fetch(
     sift([
       process.env.NEXT_PUBLIC_API_URL,
@@ -65,12 +46,26 @@ export async function fetchAPI<Data extends {} = {}>(
             : {}),
         }
       : undefined
-  ).catch((err) => {
-    console.error(err);
-    throw new Error(err);
-  });
+  );
   if (!res.ok) {
-    throw new Error(await res.text());
+    // throw new Error(await res.text());
+    return {
+      api_version: "1.0",
+      data: null,
+      error: {
+        id: "",
+        code: res.status,
+        detail: await res.text(),
+        error_type: "APIError",
+        source: sift([
+          process.env.NEXT_PUBLIC_API_URL,
+          // "http://127.0.0.1:8000",
+          path,
+          query && "?" + qs.stringify(query, { encode: false }),
+        ]).join(""),
+      },
+      meta: null,
+    };
   }
 
   return await res.json();

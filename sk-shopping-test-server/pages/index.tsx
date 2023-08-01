@@ -17,6 +17,7 @@ import {
 import { CustomPage, LangCode } from "@/utils/types";
 import { useSession } from "next-auth/react";
 import useUser from "@/utils/helpers/useUser";
+import FetchComponent from "@/components/FetchComponent";
 
 // Page
 const IndexPage: CustomPage = () => {
@@ -37,6 +38,7 @@ const IndexPage: CustomPage = () => {
           {status === "unauthenticated" && <p>Not Logged in</p>}
           {status === "authenticated" && <p>Logged in as {user?.username}</p>}
         </Section>
+        <FetchComponent accessToken={accessToken ?? undefined} />
       </ContentLayout>
     </>
   );

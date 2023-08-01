@@ -104,6 +104,7 @@ export const useOneTapSignin = (options?: {
                 ).toUTCString()}`;
               }
 
+              router.push("/");
               setLoading(false);
             },
             prompt_parent_id: parentContainerID,
