@@ -9,12 +9,12 @@ pub(crate) mod db;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IdOnlyShop {
-    pub id: String,
+    pub id: uuid::Uuid,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompactShop {
-    pub id: String,
+    pub id: uuid::Uuid,
     pub name: MultiLangString,
     pub accent_color: Option<String>,
     pub background_color: Option<String>,
@@ -23,7 +23,7 @@ pub struct CompactShop {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DefaultShop {
-    pub id: String,
+    pub id: uuid::Uuid,
     pub name: MultiLangString,
     pub accent_color: Option<String>,
     pub background_color: Option<String>,
@@ -38,7 +38,7 @@ pub struct DefaultShop {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DetailedShop {
-    pub id: String,
+    pub id: uuid::Uuid,
     pub name: MultiLangString,
     pub accent_color: Option<String>,
     pub background_color: Option<String>,

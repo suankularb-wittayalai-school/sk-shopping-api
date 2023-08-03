@@ -138,7 +138,7 @@ impl DetailedUser {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub enum User {
     IdOnly(IdOnlyUser),
     Compact(CompactUser),
@@ -147,7 +147,7 @@ pub enum User {
 }
 
 impl User {
-    pub async fn from_table(user: UserTable, fetch_level: &Option<FetchLevel>) -> Self {
+    pub async fn from_table(user: UserTable, fetch_level: Option<&FetchLevel>) -> Self {
         match fetch_level {
             Some(level) => match level {
                 FetchLevel::IdOnly => Self::IdOnly(IdOnlyUser::from_table(user)),

@@ -8,12 +8,12 @@ pub(crate) mod db;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IdOnlyListing {
-    pub id: String,
+    pub id: uuid::Uuid,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompactListing {
-    pub id: String,
+    pub id: uuid::Uuid,
     pub name: String,
     pub description: String,
     pub shop: Shop,
@@ -25,7 +25,7 @@ pub struct CompactListing {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DefaultListing {
-    pub id: String,
+    pub id: uuid::Uuid,
     pub name: String,
     pub description: String,
     pub shop: Shop,
@@ -41,7 +41,7 @@ pub struct DefaultListing {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DetailedListing {
-    pub id: String,
+    pub id: uuid::Uuid,
     pub name: String,
     pub description: String,
     pub shop: Shop,

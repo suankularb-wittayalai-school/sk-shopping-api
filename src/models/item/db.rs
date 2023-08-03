@@ -4,7 +4,7 @@ use sqlx::FromRow;
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct ItemTable {
-    pub id: String,
+    pub id: uuid::Uuid,
     pub created_at: Option<NaiveDateTime>,
     pub name: String,
     pub variant_name: Option<String>,

@@ -8,12 +8,12 @@ pub(crate) mod db;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IdOnlyItem {
-    pub id: String,
+    pub id: uuid::Uuid,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompactItem {
-    pub id: String,
+    pub id: uuid::Uuid,
     pub name: String,
     pub variant_name: Option<String>,
     pub price: i64,
@@ -25,7 +25,7 @@ pub struct CompactItem {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DefaultItem {
-    pub id: String,
+    pub id: uuid::Uuid,
     pub name: String,
     pub variant_name: Option<String>,
     pub price: i64,
@@ -40,7 +40,7 @@ pub struct DefaultItem {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DetailedItem {
-    pub id: String,
+    pub id: uuid::Uuid,
     pub name: String,
     pub variant_name: Option<String>,
     pub price: i64,
