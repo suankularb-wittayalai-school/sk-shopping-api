@@ -23,7 +23,7 @@ pub struct DefaultOrder {
     pub zip_code: Option<String>,
     pub province: Option<String>,
     pub district: Option<String>,
-    pub pickup_location: Option<String>,
+    pub pickup_location: Option<Vec<String>>,
     pub buyer: User,
 }
 
@@ -82,18 +82,44 @@ impl DefaultOrder {
             .map(|row| {
                 let item_id = row.get::<sqlx::types::Uuid, _>("item_id");
                 let price = row.get::<i64, _>("price");
-                let discounted_price = row.get::<i64, _>("discounted_price");
+                let discounted_price = row.get::<Option<i64>, _>("discounted_price");
                 let amount = item_amount
                     .iter()
                     .find(|&&amount| items_id[amount as usize] == item_id)
                     .unwrap();
-                if discounted_price == 0 {
-                    price * *amount as i64
-                } else {
-                    discounted_price * *amount as i64
-                }
+                // if discounted_price == 0 {
+                //     price * *amount as i64
+                // } else {
+                //     discounted_price * *amount as i64
+                // }
+                discounted_price.unwrap_or(price) * *amount as i64
             })
             .sum::<i64>();
+
+        let pickup_location = sqlx::query(
+            r#"
+            SELECT pickup_location
+            FROM shops INNER JOIN listings ON shops.id = listings.shop_id
+            WHERE listings.id = ANY($1)
+            "#,
+        )
+        .bind(&items_id)
+        .fetch_all(pool)
+        .await?
+        .into_iter()
+        .map(|row| row.get::<Option<String>, _>("pickup_location"))
+        .collect::<Vec<Option<String>>>();
+
+        let pickup_location = pickup_location
+            .iter()
+            .filter_map(|pickup_location| pickup_location.clone())
+            .collect::<Vec<String>>();
+
+        let pickup_location = if pickup_location.is_empty() {
+            None
+        } else {
+            Some(pickup_location)
+        };
 
         Ok(Self {
             id: order.id,
@@ -107,8 +133,7 @@ impl DefaultOrder {
             zip_code: order.zip_code,
             province: order.province,
             district: order.district,
-            // TODO: implement pickup_location based on delivery_type and shop
-            pickup_location: Some("".to_string()),
+            pickup_location,
             buyer: User::from_id(order.buyer_id, pool, descendant_fetch_level).await?,
         })
     }

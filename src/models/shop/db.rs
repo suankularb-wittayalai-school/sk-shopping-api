@@ -8,7 +8,7 @@ pub struct ShopTable {
     pub created_at: Option<DateTime<Utc>>,
     pub name_th: String,
     pub name_en: Option<String>,
-    pub logo_url: String,
+    pub logo_url: Option<String>,
     pub is_school_pickup_allowed: bool,
     pub pickup_location: Option<String>,
     pub pickup_description: Option<String>,
@@ -18,4 +18,18 @@ pub struct ShopTable {
     pub accept_cod: bool,
     pub accent_color: Option<String>,
     pub background_color: Option<String>,
+}
+
+impl ShopTable {
+    pub async fn get_by_id(
+        pool: &sqlx::PgPool,
+        id: sqlx::types::Uuid,
+    ) -> Result<Self, sqlx::Error> {
+        let result = sqlx::query_as::<_, Self>("SELECT * FROM shops WHERE id = $1")
+            .bind(id)
+            .fetch_one(pool)
+            .await?;
+
+        Ok(result)
+    }
 }

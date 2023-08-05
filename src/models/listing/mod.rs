@@ -284,10 +284,9 @@ impl DefaultListing {
             lifetime_stock,
             amount_sold,
             categories,
-            // TODO: get shop from db
-            shop: Shop::from_table(
+            shop: Shop::get_by_id(
                 pool,
-                super::shop::db::ShopTable::default(),
+                listing.shop_id,
                 descendant_fetch_level,
                 Some(&FetchLevel::IdOnly),
             )
@@ -446,10 +445,9 @@ impl DetailedListing {
             lifetime_stock,
             amount_sold,
             categories,
-            // TODO: get shop values from db
-            shop: Shop::from_table(
+            shop: Shop::get_by_id(
                 pool,
-                super::shop::db::ShopTable::default(),
+                listing.shop_id,
                 descendant_fetch_level,
                 Some(&FetchLevel::IdOnly),
             )

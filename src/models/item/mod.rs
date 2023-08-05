@@ -283,6 +283,16 @@ impl DetailedItem {
         )
         .await?;
 
+        let shop_id = sqlx::query(
+            r#"
+            SELECT shop_id FROM listings WHERE id = $1
+            "#,
+        )
+        .bind(item.listing_id)
+        .fetch_one(pool)
+        .await?
+        .get::<Uuid, _>("shop_id");
+
         Ok(DetailedItem {
             id: item.id,
             name: item.name,
@@ -303,10 +313,9 @@ impl DetailedItem {
             )
             .await?,
             collections,
-            // TODO: get shops values from db
-            shop: Shop::from_table(
+            shop: Shop::get_by_id(
                 pool,
-                super::shop::db::ShopTable::default(),
+                shop_id,
                 descendant_fetch_level,
                 Some(&FetchLevel::IdOnly),
             )

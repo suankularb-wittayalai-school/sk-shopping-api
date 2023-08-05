@@ -5,6 +5,8 @@ use mysk_lib::models::common::{requests::FetchLevel, string::MultiLangString};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 
+use self::db::ShopTable;
+
 use super::{collection::Collection, item::Item, listing::Listing};
 
 pub(crate) mod db;
@@ -69,7 +71,7 @@ impl From<db::ShopTable> for CompactShop {
             name: MultiLangString::new(shop.name_en, shop.name_th),
             accent_color: shop.accent_color,
             background_color: shop.background_color,
-            logo_url: Some(shop.logo_url),
+            logo_url: shop.logo_url,
         }
     }
 }
@@ -81,7 +83,7 @@ impl From<db::ShopTable> for DefaultShop {
             name: MultiLangString::new(shop.name_en, shop.name_th),
             accent_color: shop.accent_color,
             background_color: shop.background_color,
-            logo_url: Some(shop.logo_url),
+            logo_url: shop.logo_url,
             is_school_pickup_allowed: shop.is_school_pickup_allowed,
             pickup_location: shop.pickup_location,
             is_delivery_allowed: shop.is_delivery_allowed,
@@ -164,7 +166,7 @@ impl DetailedShop {
             name: MultiLangString::new(shop.name_en, shop.name_th),
             accent_color: shop.accent_color,
             background_color: shop.background_color,
-            logo_url: Some(shop.logo_url),
+            logo_url: shop.logo_url,
             is_school_pickup_allowed: shop.is_school_pickup_allowed,
             pickup_location: shop.pickup_location,
             is_delivery_allowed: shop.is_delivery_allowed,
@@ -202,6 +204,17 @@ impl Shop {
             )),
             None => Ok(Self::Default(shop.into())),
         }
+    }
+
+    pub async fn get_by_id(
+        pool: &sqlx::PgPool,
+        ids: sqlx::types::Uuid,
+        fetch_level: Option<&FetchLevel>,
+        descendant_fetch_level: Option<&FetchLevel>,
+    ) -> Result<Self, sqlx::Error> {
+        let shop = ShopTable::get_by_id(pool, ids).await?;
+
+        Self::from_table(pool, shop, fetch_level, descendant_fetch_level).await
     }
 }
 

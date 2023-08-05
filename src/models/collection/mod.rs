@@ -77,10 +77,9 @@ impl DefaultCollection {
             description: collection.description,
             foreground_url: collection.foreground_url,
             background_url: collection.background_url,
-            // TODO: get shop from database
-            shop: Shop::from_table(
+            shop: Shop::get_by_id(
                 pool,
-                super::shop::db::ShopTable::default(),
+                collection.shop_id,
                 descendant_fetch_level,
                 Some(&FetchLevel::IdOnly),
             )
@@ -149,10 +148,9 @@ impl DetailedCollection {
             background_url: collection.background_url,
             items,
             listings,
-            // TODO: get shop from database
-            shop: Shop::from_table(
+            shop: Shop::get_by_id(
                 pool,
-                super::shop::db::ShopTable::default(),
+                collection.shop_id,
                 descendant_fetch_level,
                 Some(&FetchLevel::IdOnly),
             )
