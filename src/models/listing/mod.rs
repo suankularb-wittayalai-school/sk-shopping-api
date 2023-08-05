@@ -1,6 +1,6 @@
 use async_recursion::async_recursion;
 use chrono::{DateTime, Utc};
-use mysk_lib::models::common::requests::FetchLevel;
+use mysk_lib::models::common::{requests::FetchLevel, string::MultiLangString};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 
@@ -39,6 +39,7 @@ pub struct DefaultListing {
     pub lifetime_stock: i64,
     pub amount_sold: i64,
     pub variants: Vec<Item>,
+    pub categories: Vec<MultiLangString>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -56,6 +57,7 @@ pub struct DetailedListing {
     pub amount_sold: i64,
     pub variants: Vec<Item>,
     pub collections: Vec<Collection>,
+    pub categories: Vec<MultiLangString>,
 }
 
 impl From<db::ListingTable> for IdOnlyListing {
@@ -114,8 +116,10 @@ impl CompactListing {
                 Item::Detailed(item) => item.discounted_price,
                 Item::IdOnly(_item) => unreachable!("Item::IdOnly should not be in variants"),
             })
+            .filter(|item| item.is_some())
             .min()
             .unwrap_or_default();
+        // dbg!(&variants);
 
         // get is_sold_out being the sum of all variants lifetime_stock - amount_sold
         let is_sold_out = variants
@@ -179,8 +183,13 @@ impl DefaultListing {
         .await?;
 
         // get default variants for other fields
-        let default_variants =
-            Item::get_by_ids(pool, variants_id, None, Some(&FetchLevel::IdOnly)).await?;
+        let default_variants = Item::get_by_ids(
+            pool,
+            variants_id,
+            Some(&FetchLevel::Default),
+            Some(&FetchLevel::IdOnly),
+        )
+        .await?;
 
         // get price being the lowest price of all variants
         let price = default_variants
@@ -197,11 +206,12 @@ impl DefaultListing {
         let discounted_price = default_variants
             .iter()
             .map(|item| match item {
+                Item::Compact(item) => item.discounted_price,
                 Item::Default(item) => item.discounted_price,
                 Item::Detailed(item) => item.discounted_price,
-                Item::Compact(item) => item.discounted_price,
                 Item::IdOnly(_item) => unreachable!("Item::IdOnly should not be in variants"),
             })
+            .filter(|item| item.is_some())
             .min()
             .unwrap_or_default();
 
@@ -247,6 +257,19 @@ impl DefaultListing {
             })
             .sum::<i64>();
 
+        let categories = sqlx::query(
+            r#"
+            SELECT * FROM listing_categories INNER JOIN categories ON listing_categories.category_id = categories.id
+            WHERE listing_id = $1 
+            "#,
+        )
+        .bind(listing.id)
+        .fetch_all(pool)
+        .await?
+        .into_iter()
+        .map(|item| MultiLangString::new(item.get("name_th"), item.get("name_en")))
+        .collect::<Vec<MultiLangString>>();
+
         Ok(Self {
             id: listing.id,
             name: listing.name,
@@ -259,6 +282,7 @@ impl DefaultListing {
             discounted_price,
             lifetime_stock,
             amount_sold,
+            categories,
             // TODO: get shop stock values from db
             shop: Shop::from_table(
                 pool,
@@ -280,8 +304,8 @@ impl DetailedListing {
     ) -> Result<Self, sqlx::Error> {
         let variants_id = sqlx::query(
             r#"
-            SELECT * FROM items
-            WHERE listing_id = $1
+            SELECT * FROM items 
+            WHERE listing_id = $1 
             "#,
         )
         .bind(listing.id)
@@ -302,8 +326,13 @@ impl DetailedListing {
         .await?;
 
         // get default variants for other fields
-        let default_variants =
-            Item::get_by_ids(pool, variants_id, None, Some(&FetchLevel::IdOnly)).await?;
+        let default_variants = Item::get_by_ids(
+            pool,
+            variants_id,
+            Some(&FetchLevel::Default),
+            Some(&FetchLevel::IdOnly),
+        )
+        .await?;
 
         // get price being the lowest price of all variants
         let price = default_variants
@@ -320,11 +349,12 @@ impl DetailedListing {
         let discounted_price = default_variants
             .iter()
             .map(|item| match item {
+                Item::Compact(item) => item.discounted_price,
                 Item::Default(item) => item.discounted_price,
                 Item::Detailed(item) => item.discounted_price,
-                Item::Compact(item) => item.discounted_price,
                 Item::IdOnly(_item) => unreachable!("Item::IdOnly should not be in variants"),
             })
+            .filter(|item| item.is_some())
             .min()
             .unwrap_or_default();
 
@@ -369,6 +399,18 @@ impl DetailedListing {
                 _ => unreachable!("Item::IdOnly and Item::Compact should not be in variants"),
             })
             .sum::<i64>();
+        let categories = sqlx::query(
+            r#"
+            SELECT * FROM listing_categories INNER JOIN categories ON listing_categories.category_id = categories.id
+            WHERE listing_id = $1
+            "#,
+        )
+        .bind(listing.id)
+        .fetch_all(pool)
+        .await?
+        .into_iter()
+        .map(|item| MultiLangString::new(item.get("name_th"), item.get("name_en")))
+        .collect::<Vec<MultiLangString>>();
 
         Ok(Self {
             id: listing.id,
@@ -382,6 +424,7 @@ impl DetailedListing {
             discounted_price,
             lifetime_stock,
             amount_sold,
+            categories,
             // TODO: get shop collections values from db
             shop: Shop::from_table(
                 pool,

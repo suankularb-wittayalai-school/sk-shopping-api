@@ -16,7 +16,7 @@ import {
 import { useState } from "react";
 
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { dark } from "react-syntax-highlighter/dist/esm/styles/prism";
+// import { dark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 export default function FetchComponent({
   accessToken,
@@ -146,7 +146,7 @@ export default function FetchComponent({
         {loading && <p>Loading...</p>}
         {/* {!loading && <pre>{returnResponse}</pre>} */}
         {!loading && (
-          <SyntaxHighlighter language="json" style={dark}>
+          <SyntaxHighlighter language="json">
             {returnResponse}
           </SyntaxHighlighter>
         )}
