@@ -134,7 +134,7 @@ export default function FetchComponent({
           </Button>
         </Actions>
       </Section>
-      <Section>
+      <Section className="max-w-full overflow-auto">
         {loading && <p>Loading...</p>}
         {!loading && <pre>{returnResponse}</pre>}
       </Section>

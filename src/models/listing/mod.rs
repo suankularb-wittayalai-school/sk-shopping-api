@@ -1,5 +1,5 @@
 use async_recursion::async_recursion;
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use mysk_lib::models::common::requests::FetchLevel;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
@@ -32,8 +32,8 @@ pub struct DefaultListing {
     pub description: String,
     pub shop: Shop,
     pub thumbnail_url: Option<String>,
-    pub preorder_start: Option<NaiveDateTime>,
-    pub preorder_end: Option<NaiveDateTime>,
+    pub preorder_start: Option<DateTime<Utc>>,
+    pub preorder_end: Option<DateTime<Utc>>,
     pub price: i64,
     pub discounted_price: Option<i64>,
     pub lifetime_stock: i64,
@@ -48,8 +48,8 @@ pub struct DetailedListing {
     pub description: String,
     pub shop: Shop,
     pub thumbnail_url: Option<String>,
-    pub preorder_start: Option<NaiveDateTime>,
-    pub preorder_end: Option<NaiveDateTime>,
+    pub preorder_start: Option<DateTime<Utc>>,
+    pub preorder_end: Option<DateTime<Utc>>,
     pub price: i64,
     pub discounted_price: Option<i64>,
     pub lifetime_stock: i64,
@@ -295,7 +295,7 @@ impl DetailedListing {
 
         let variants = Item::get_by_ids(
             pool,
-            variants_id,
+            variants_id.clone(),
             descendant_fetch_level,
             Some(&FetchLevel::IdOnly),
         )

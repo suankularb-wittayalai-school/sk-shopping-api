@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use sqlx::{FromRow, Type};
@@ -107,15 +107,14 @@ impl sqlx::Decode<'_, sqlx::Postgres> for DeliveryType {
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct OrderTable {
     pub id: Uuid,
-    pub created_at: Option<NaiveDateTime>,
-    pub buyer_id: Uuid,
+    pub created_at: Option<DateTime<Utc>>,
+    pub buyer_id: sqlx::types::Uuid,
     pub is_paid: bool,
     pub shipping_address_line_1: Option<String>,
     pub shipping_address_line_2: Option<String>,
     pub zip_code: Option<String>,
     pub province: Option<String>,
     pub district: Option<String>,
-    pub pickup_location: Option<String>,
     pub shipment_status: OrderStatus,
     pub delivery_type: DeliveryType,
 }

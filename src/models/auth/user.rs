@@ -162,7 +162,7 @@ impl User {
     pub async fn from_id(
         id: Uuid,
         pool: &PgPool,
-        fetch_level: &Option<FetchLevel>,
+        fetch_level: Option<&FetchLevel>,
     ) -> Result<Self, Error> {
         let user = UserTable::from_id(pool, id).await?;
 
@@ -301,7 +301,7 @@ impl FromRequest for User {
         };
 
         Box::pin(async move {
-            let user = User::from_id(user_id, &pool, &None).await;
+            let user = User::from_id(user_id, &pool, None).await;
 
             match user {
                 Ok(user) => Ok(user),

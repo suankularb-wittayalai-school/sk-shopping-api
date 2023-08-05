@@ -47,21 +47,10 @@ impl DefaultOrder {
             zip_code: order.zip_code,
             province: order.province,
             district: order.district,
-            pickup_location: order.pickup_location,
+            // TODO: implement pickup_location based on delivery_type and shop
+            pickup_location: Some("".to_string()),
             // TODO: implement buyer
-            buyer: User::from_table(
-                UserTable {
-                    id: order.buyer_id,
-                    username: "".to_string(),
-                    email: "".to_string(),
-                    profile: Some("".to_string()),
-                    first_name: Some("".to_string()),
-                    last_name: Some("".to_string()),
-                    created_at: None,
-                },
-                descendant_fetch_level,
-            )
-            .await,
+            buyer: User::from_id(order.buyer_id, pool, descendant_fetch_level).await?,
         })
     }
 }

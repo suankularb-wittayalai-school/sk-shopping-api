@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use mysk_lib::models::common::requests::FetchLevel;
 use serde::{Deserialize, Serialize};
 
