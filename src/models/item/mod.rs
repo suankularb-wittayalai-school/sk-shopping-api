@@ -1,5 +1,6 @@
 use chrono::NaiveDateTime;
 use mysk_lib::models::common::requests::FetchLevel;
+use parallel_stream::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use super::{collection::Collection, listing::Listing, shop::Shop};
@@ -197,5 +198,43 @@ impl Item {
             )),
             _ => Ok(Item::IdOnly(IdOnlyItem::from(item))),
         }
+    }
+
+    pub async fn get_by_id(
+        pool: &sqlx::PgPool,
+        id: uuid::Uuid,
+        level: Option<&FetchLevel>,
+        descendant_fetch_level: Option<&FetchLevel>,
+    ) -> Result<Self, sqlx::Error> {
+        let item = db::ItemTable::get_by_id(pool, id).await?;
+        Self::from_table(pool, item, level, descendant_fetch_level).await
+    }
+
+    pub async fn get_by_ids(
+        pool: &sqlx::PgPool,
+        ids: Vec<uuid::Uuid>,
+        level: Option<&FetchLevel>,
+        descendant_fetch_level: Option<&FetchLevel>,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        let items = db::ItemTable::get_by_ids(pool, ids).await?;
+        // let result = items
+        //     .into_par_stream()
+        //     .map(|item| async move {
+        //         let data = Self::from_table(pool, item, level, descendant_fetch_level).await;
+        //         match data {
+        //             Ok(data) => Some(data),
+        //             Err(_) => None,
+        //         }
+        //     })
+        //     .collect::<Vec<_>>()
+        //     .await;
+
+        // parallel stream is not working due to lifetime issue
+        let mut result = vec![];
+        for item in items {
+            let data = Self::from_table(pool, item, level, descendant_fetch_level).await?;
+            result.push(data);
+        }
+        Ok(result)
     }
 }

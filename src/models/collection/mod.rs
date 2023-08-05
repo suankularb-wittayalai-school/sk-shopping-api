@@ -92,6 +92,11 @@ impl DetailedCollection {
         descendant_fetch_level: Option<&FetchLevel>,
     ) -> Result<Self, sqlx::Error> {
         // let shop = Shop::from_table(pool, shop, descendant_fetch_level)?;
+
+        // let listing_ids = sqlx::query
+
+        // let items = Item::get_by_ids(pool, ids, level, descendant_fetch_level)
+
         Ok(Self {
             id: collection.id,
             name: collection.name,

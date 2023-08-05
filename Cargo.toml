@@ -31,3 +31,5 @@ jsonwebtoken = "8.3.0"
 futures = "0.3.17"
 uuid = { version = "1.4.1", features = ["serde", "v4"] }
 mysk-lib = { git = "https://github.com/suankularb-wittayalai-school/mysk-api.git", branch = "main" }
+rayon = "1.5.1"
+parallel-stream = "2.1.3"

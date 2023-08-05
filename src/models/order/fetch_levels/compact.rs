@@ -1,4 +1,6 @@
+use mysk_lib::models::common::requests::FetchLevel;
 use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
 
 use crate::models::order::db::{DeliveryType, OrderStatus};
 
@@ -12,7 +14,11 @@ pub struct CompactOrder {
 }
 
 impl CompactOrder {
-    pub async fn from_table(order: super::super::db::OrderTable) -> Result<Self, sqlx::Error> {
+    pub async fn from_table(
+        pool: &PgPool,
+        order: super::super::db::OrderTable,
+        descendant_fetch_level: Option<&FetchLevel>,
+    ) -> Result<Self, sqlx::Error> {
         Ok(Self {
             id: order.id,
             is_paid: order.is_paid,

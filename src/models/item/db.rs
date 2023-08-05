@@ -14,3 +14,26 @@ pub struct ItemTable {
     pub preorder_end: Option<NaiveDateTime>,
     pub listing_id: Option<String>,
 }
+
+impl ItemTable {
+    pub async fn get_by_id(pool: &sqlx::PgPool, id: uuid::Uuid) -> Result<Self, sqlx::Error> {
+        let result = sqlx::query_as::<_, Self>("SELECT * FROM items WHERE id = $1")
+            .bind(id)
+            .fetch_one(pool)
+            .await?;
+
+        Ok(result)
+    }
+
+    pub async fn get_by_ids(
+        pool: &sqlx::PgPool,
+        ids: Vec<uuid::Uuid>,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        let result = sqlx::query_as::<_, Self>("SELECT * FROM items WHERE id = ANY($1)")
+            .bind(ids)
+            .fetch_all(pool)
+            .await?;
+
+        Ok(result)
+    }
+}
