@@ -274,17 +274,17 @@ impl DetailedItem {
             preorder_end: item.preorder_end,
             colors,
             images_url,
-            // TODO: get shops, listings, and collection values from db
-            shop: Shop::from_table(
+            listing: Listing::get_by_id(
                 pool,
-                super::shop::db::ShopTable::default(),
+                item.listing_id,
                 descendant_fetch_level,
                 Some(&FetchLevel::IdOnly),
             )
             .await?,
-            listing: Listing::from_table(
+            // TODO: get shops, and collection values from db
+            shop: Shop::from_table(
                 pool,
-                super::listing::db::ListingTable::default(),
+                super::shop::db::ShopTable::default(),
                 descendant_fetch_level,
                 Some(&FetchLevel::IdOnly),
             )

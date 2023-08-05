@@ -1,6 +1,8 @@
+use async_recursion::async_recursion;
 use chrono::{DateTime, Utc};
 use mysk_lib::models::common::requests::FetchLevel;
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
 
 use super::{item::Item, listing::Listing, shop::Shop};
 
@@ -86,14 +88,54 @@ impl DefaultCollection {
 }
 
 impl DetailedCollection {
-    pub async fn from_table(
+    #[async_recursion]
+    pub async fn from_table<'a: 'async_recursion>(
         pool: &sqlx::PgPool,
         collection: db::CollectionTable,
-        descendant_fetch_level: Option<&FetchLevel>,
+        descendant_fetch_level: Option<&'a FetchLevel>,
     ) -> Result<Self, sqlx::Error> {
         // let shop = Shop::from_table(pool, shop, descendant_fetch_level)?;
 
-        // let listing_ids = sqlx::query
+        let listing_ids = sqlx::query(
+            r#"
+            SELECT listing_id FROM collection_listings
+            WHERE collection_id = $1
+            "#,
+        )
+        .bind(collection.id)
+        .fetch_all(pool)
+        .await?
+        .into_iter()
+        .map(|row| row.get::<sqlx::types::Uuid, _>("listing_id"))
+        .collect::<Vec<_>>();
+
+        let listings = Listing::get_by_ids(
+            pool,
+            listing_ids.clone(),
+            descendant_fetch_level,
+            Some(&FetchLevel::IdOnly),
+        )
+        .await?;
+
+        let items_ids = sqlx::query(
+            r#"
+            SELECT id FROM items WHERE listing_id = ANY($1)
+            "#,
+        )
+        .bind(&listing_ids)
+        .fetch_all(pool)
+        .await?
+        .into_iter()
+        .map(|row| row.get::<sqlx::types::Uuid, _>("id"))
+        .collect::<Vec<_>>();
+
+        let items = Item::get_by_ids(
+            pool,
+            items_ids.clone(),
+            descendant_fetch_level,
+            Some(&FetchLevel::IdOnly),
+        )
+        .await?;
 
         // let items = Item::get_by_ids(pool, ids, level, descendant_fetch_level)
 
@@ -103,7 +145,9 @@ impl DetailedCollection {
             description: collection.description,
             foreground_url: collection.foreground_url,
             background_url: collection.background_url,
-            // TODO: get shop, items, listings from database
+            items,
+            listings,
+            // TODO: get shop from database
             shop: Shop::from_table(
                 pool,
                 super::shop::db::ShopTable::default(),
@@ -111,8 +155,6 @@ impl DetailedCollection {
                 Some(&FetchLevel::IdOnly),
             )
             .await?,
-            items: Vec::new(),
-            listings: Vec::new(),
         })
     }
 }

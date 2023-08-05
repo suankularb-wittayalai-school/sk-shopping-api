@@ -12,7 +12,7 @@ pub struct ItemTable {
     pub discounted_price: Option<i64>,
     pub preorder_start: Option<DateTime<Utc>>,
     pub preorder_end: Option<DateTime<Utc>>,
-    pub listing_id: Option<sqlx::types::Uuid>,
+    pub listing_id: sqlx::types::Uuid,
 }
 
 impl ItemTable {

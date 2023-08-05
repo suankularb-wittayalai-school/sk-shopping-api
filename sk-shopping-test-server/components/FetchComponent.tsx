@@ -13,8 +13,10 @@ import {
   Select,
   TextField,
 } from "@suankularb-components/react";
-import { set } from "date-fns";
 import { useState } from "react";
+
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { dark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 export default function FetchComponent({
   accessToken,
@@ -26,7 +28,13 @@ export default function FetchComponent({
     "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
   >("GET");
   const [body, setBody] = useState<string>("");
-  const [query, setQuery] = useState<string>("");
+  const [query, setQuery] = useState<string>(
+    JSON.stringify(
+      { fetch_level: "default", descendant_fetch_level: "id_only" },
+      null,
+      2
+    )
+  );
 
   const [returnResponse, setReturnResponse] = useState<string>("");
 
@@ -136,7 +144,12 @@ export default function FetchComponent({
       </Section>
       <Section className="max-w-full overflow-auto">
         {loading && <p>Loading...</p>}
-        {!loading && <pre>{returnResponse}</pre>}
+        {/* {!loading && <pre>{returnResponse}</pre>} */}
+        {!loading && (
+          <SyntaxHighlighter language="json" style={dark}>
+            {returnResponse}
+          </SyntaxHighlighter>
+        )}
       </Section>
     </>
   );

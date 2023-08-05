@@ -435,4 +435,32 @@ impl Listing {
             None => Ok(Listing::IdOnly(IdOnlyListing::from(listing))),
         }
     }
+
+    pub async fn get_by_id(
+        pool: &sqlx::PgPool,
+        id: sqlx::types::Uuid,
+        level: Option<&FetchLevel>,
+        descendant_fetch_level: Option<&FetchLevel>,
+    ) -> Result<Self, sqlx::Error> {
+        let listing = db::ListingTable::get_by_id(pool, id).await?;
+
+        Self::from_table(pool, listing, level, descendant_fetch_level).await
+    }
+
+    pub async fn get_by_ids(
+        pool: &sqlx::PgPool,
+        ids: Vec<sqlx::types::Uuid>,
+        level: Option<&FetchLevel>,
+        descendant_fetch_level: Option<&FetchLevel>,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        let listings = db::ListingTable::get_by_ids(pool, ids).await?;
+
+        let mut result = Vec::with_capacity(listings.len());
+
+        for listing in listings {
+            result.push(Self::from_table(pool, listing, level, descendant_fetch_level).await?);
+        }
+
+        Ok(result)
+    }
 }

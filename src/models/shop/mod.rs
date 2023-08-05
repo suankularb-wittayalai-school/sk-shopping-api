@@ -1,7 +1,9 @@
 use std::vec;
 
+use async_recursion::async_recursion;
 use mysk_lib::models::common::{requests::FetchLevel, string::MultiLangString};
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
 
 use super::{collection::Collection, item::Item, listing::Listing};
 
@@ -91,11 +93,52 @@ impl From<db::ShopTable> for DefaultShop {
 }
 
 impl DetailedShop {
-    pub async fn from_table(
+    #[async_recursion]
+    pub async fn from_table<'a: 'async_recursion>(
         pool: &sqlx::PgPool,
         shop: db::ShopTable,
-        descendant_fetch_level: Option<&FetchLevel>,
+        descendant_fetch_level: Option<&'a FetchLevel>,
     ) -> Result<Self, sqlx::Error> {
+        let listing_ids = sqlx::query(
+            r#"
+            SELECT id FROM listings WHERE shop_id = $1
+            "#,
+        )
+        .bind(shop.id)
+        .fetch_all(pool)
+        .await?
+        .into_iter()
+        .map(|row| row.get::<sqlx::types::Uuid, _>("id"))
+        .collect::<Vec<_>>();
+
+        let listings = Listing::get_by_ids(
+            pool,
+            listing_ids.clone(),
+            descendant_fetch_level,
+            Some(&FetchLevel::IdOnly),
+        )
+        .await?;
+
+        let items_ids = sqlx::query(
+            r#"
+            SELECT id FROM items WHERE listing_id = ANY($1)
+            "#,
+        )
+        .bind(&listing_ids)
+        .fetch_all(pool)
+        .await?
+        .into_iter()
+        .map(|row| row.get::<sqlx::types::Uuid, _>("id"))
+        .collect::<Vec<_>>();
+
+        let items = Item::get_by_ids(
+            pool,
+            items_ids.clone(),
+            descendant_fetch_level,
+            Some(&FetchLevel::IdOnly),
+        )
+        .await?;
+
         Ok(Self {
             id: shop.id,
             name: MultiLangString::new(shop.name_en, shop.name_th),
@@ -108,9 +151,9 @@ impl DetailedShop {
             accept_promptpay: shop.accept_promptpay,
             promptpay_number: shop.promptpay_number,
             accept_cod: shop.accept_cod,
-            // TODO: get listings and items from db
-            items: vec![],
-            listings: vec![],
+            listings,
+            items,
+            // TODO: get collections from db
             collections: vec![],
         })
     }
