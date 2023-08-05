@@ -9,12 +9,12 @@ pub(crate) mod db;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IdOnlyItem {
-    pub id: uuid::Uuid,
+    pub id: sqlx::types::Uuid,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompactItem {
-    pub id: uuid::Uuid,
+    pub id: sqlx::types::Uuid,
     pub name: String,
     pub variant_name: Option<String>,
     pub price: i64,
@@ -26,7 +26,7 @@ pub struct CompactItem {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DefaultItem {
-    pub id: uuid::Uuid,
+    pub id: sqlx::types::Uuid,
     pub name: String,
     pub variant_name: Option<String>,
     pub price: i64,
@@ -41,7 +41,7 @@ pub struct DefaultItem {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DetailedItem {
-    pub id: uuid::Uuid,
+    pub id: sqlx::types::Uuid,
     pub name: String,
     pub variant_name: Option<String>,
     pub price: i64,
@@ -97,16 +97,14 @@ impl DefaultItem {
             variant_name: item.variant_name,
             price: item.price,
             discounted_price: item.discounted_price,
-            // TODO: get colors, preorder and stock values from db
+            preorder_start: item.preorder_start,
+            preorder_end: item.preorder_end,
+            // TODO: get colors and stock values from db
             // lifetime_stock: item.lifetime_stock,
             // amount_sold: item.amount_sold,
-            // preorder_start: item.preorder_start,
-            // preorder_end: item.preorder_end,
             // colors: colors.into_iter().map(|c| c.color).collect(),
             lifetime_stock: 0,
             amount_sold: 0,
-            preorder_start: None,
-            preorder_end: None,
             colors: vec![],
             images_url: vec![],
         })
@@ -120,6 +118,7 @@ impl DetailedItem {
         descendant_fetch_level: Option<&FetchLevel>,
     ) -> Result<Self, sqlx::Error> {
         // let colors = db::ItemColorTable::find_by_item_id(&item.id).await?;
+
         Ok(DetailedItem {
             id: item.id,
             name: item.name,
@@ -202,7 +201,7 @@ impl Item {
 
     pub async fn get_by_id(
         pool: &sqlx::PgPool,
-        id: uuid::Uuid,
+        id: sqlx::types::Uuid,
         level: Option<&FetchLevel>,
         descendant_fetch_level: Option<&FetchLevel>,
     ) -> Result<Self, sqlx::Error> {
@@ -212,7 +211,7 @@ impl Item {
 
     pub async fn get_by_ids(
         pool: &sqlx::PgPool,
-        ids: Vec<uuid::Uuid>,
+        ids: Vec<sqlx::types::Uuid>,
         level: Option<&FetchLevel>,
         descendant_fetch_level: Option<&FetchLevel>,
     ) -> Result<Vec<Self>, sqlx::Error> {

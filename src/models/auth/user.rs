@@ -15,7 +15,7 @@ use crate::models::auth::oauth::TokenClaims;
 use crate::AppState;
 
 use super::oauth::GoogleUserResult;
-// use uuid::Uuid;
+// use sqlx::types::Uuid;
 
 #[derive(Debug, Deserialize, Serialize, Clone, FromRow)]
 pub struct UserTable {

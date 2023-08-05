@@ -4,7 +4,7 @@ use sqlx::FromRow;
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct ItemTable {
-    pub id: uuid::Uuid,
+    pub id: sqlx::types::Uuid,
     pub created_at: Option<NaiveDateTime>,
     pub name: String,
     pub variant_name: Option<String>,
@@ -16,7 +16,10 @@ pub struct ItemTable {
 }
 
 impl ItemTable {
-    pub async fn get_by_id(pool: &sqlx::PgPool, id: uuid::Uuid) -> Result<Self, sqlx::Error> {
+    pub async fn get_by_id(
+        pool: &sqlx::PgPool,
+        id: sqlx::types::Uuid,
+    ) -> Result<Self, sqlx::Error> {
         let result = sqlx::query_as::<_, Self>("SELECT * FROM items WHERE id = $1")
             .bind(id)
             .fetch_one(pool)
@@ -27,7 +30,7 @@ impl ItemTable {
 
     pub async fn get_by_ids(
         pool: &sqlx::PgPool,
-        ids: Vec<uuid::Uuid>,
+        ids: Vec<sqlx::types::Uuid>,
     ) -> Result<Vec<Self>, sqlx::Error> {
         let result = sqlx::query_as::<_, Self>("SELECT * FROM items WHERE id = ANY($1)")
             .bind(ids)

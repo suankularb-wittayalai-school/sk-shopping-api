@@ -6,7 +6,7 @@ use crate::models::order::db::{DeliveryType, OrderStatus};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompactOrder {
-    pub id: uuid::Uuid,
+    pub id: sqlx::types::Uuid,
     pub is_paid: bool,
     pub shipment_status: OrderStatus,
     pub total_price: i64,

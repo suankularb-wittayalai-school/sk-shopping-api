@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IdOnlyOrder {
-    pub id: uuid::Uuid,
+    pub id: sqlx::types::Uuid,
 }
 
 impl From<super::super::db::OrderTable> for IdOnlyOrder {

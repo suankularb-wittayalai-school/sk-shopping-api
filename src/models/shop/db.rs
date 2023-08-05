@@ -4,7 +4,7 @@ use sqlx::FromRow;
 
 #[derive(Debug, Serialize, Deserialize, FromRow, Default)]
 pub struct ShopTable {
-    pub id: uuid::Uuid,
+    pub id: sqlx::types::Uuid,
     pub created_at: Option<NaiveDateTime>,
     pub name_th: String,
     pub name_en: Option<String>,

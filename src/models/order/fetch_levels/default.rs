@@ -12,7 +12,7 @@ use crate::models::{
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DefaultOrder {
-    pub id: uuid::Uuid,
+    pub id: sqlx::types::Uuid,
     pub is_paid: bool,
     pub shipment_status: OrderStatus,
     pub total_price: i64,

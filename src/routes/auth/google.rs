@@ -6,7 +6,7 @@ use chrono::{prelude::*, Duration};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use mysk_lib::models::common::response::{ErrorResponseType, ErrorType, ResponseType};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+use sqlx::types::Uuid;
 
 use crate::{
     models::auth::{

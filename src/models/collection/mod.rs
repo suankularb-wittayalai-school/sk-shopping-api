@@ -8,12 +8,12 @@ pub(crate) mod db;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IdOnlyCollection {
-    pub id: uuid::Uuid,
+    pub id: sqlx::types::Uuid,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompactCollection {
-    pub id: uuid::Uuid,
+    pub id: sqlx::types::Uuid,
     pub name: String,
     pub description: String,
     pub foreground_url: Option<String>,
@@ -22,7 +22,7 @@ pub struct CompactCollection {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DefaultCollection {
-    pub id: uuid::Uuid,
+    pub id: sqlx::types::Uuid,
     pub name: String,
     pub description: String,
     pub foreground_url: Option<String>,
@@ -32,7 +32,7 @@ pub struct DefaultCollection {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DetailedCollection {
-    pub id: uuid::Uuid,
+    pub id: sqlx::types::Uuid,
     pub name: String,
     pub description: String,
     pub foreground_url: Option<String>,
