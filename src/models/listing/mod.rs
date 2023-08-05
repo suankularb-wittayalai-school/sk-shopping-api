@@ -3,6 +3,7 @@ use chrono::{DateTime, Utc};
 use mysk_lib::models::common::{requests::FetchLevel, string::MultiLangString};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use uuid::Uuid;
 
 use super::{collection::Collection, item::Item, shop::Shop};
 
@@ -283,7 +284,7 @@ impl DefaultListing {
             lifetime_stock,
             amount_sold,
             categories,
-            // TODO: get shop stock values from db
+            // TODO: get shop from db
             shop: Shop::from_table(
                 pool,
                 super::shop::db::ShopTable::default(),
@@ -412,6 +413,26 @@ impl DetailedListing {
         .map(|item| MultiLangString::new(item.get("name_th"), item.get("name_en")))
         .collect::<Vec<MultiLangString>>();
 
+        let collections = sqlx::query(
+            r#"
+            SELECT collection_id FROM collection_listings WHERE listing_id = $1
+            "#,
+        )
+        .bind(listing.id)
+        .fetch_all(pool)
+        .await?
+        .into_iter()
+        .map(|row| row.get::<Uuid, _>("collection_id"))
+        .collect();
+
+        let collections = Collection::get_by_ids(
+            pool,
+            collections,
+            descendant_fetch_level,
+            Some(&FetchLevel::IdOnly),
+        )
+        .await?;
+
         Ok(Self {
             id: listing.id,
             name: listing.name,
@@ -425,7 +446,7 @@ impl DetailedListing {
             lifetime_stock,
             amount_sold,
             categories,
-            // TODO: get shop collections values from db
+            // TODO: get shop values from db
             shop: Shop::from_table(
                 pool,
                 super::shop::db::ShopTable::default(),
@@ -433,7 +454,7 @@ impl DetailedListing {
                 Some(&FetchLevel::IdOnly),
             )
             .await?,
-            collections: vec![],
+            collections,
         })
     }
 }

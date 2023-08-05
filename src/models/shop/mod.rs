@@ -139,6 +139,26 @@ impl DetailedShop {
         )
         .await?;
 
+        let collections_id = sqlx::query(
+            r#"
+            SELECT id FROM collections WHERE shop_id = $1
+            "#,
+        )
+        .bind(shop.id)
+        .fetch_all(pool)
+        .await?
+        .into_iter()
+        .map(|row| row.get::<sqlx::types::Uuid, _>("id"))
+        .collect::<Vec<_>>();
+
+        let collections = Collection::get_by_ids(
+            pool,
+            collections_id.clone(),
+            descendant_fetch_level,
+            Some(&FetchLevel::IdOnly),
+        )
+        .await?;
+
         Ok(Self {
             id: shop.id,
             name: MultiLangString::new(shop.name_en, shop.name_th),
@@ -153,8 +173,7 @@ impl DetailedShop {
             accept_cod: shop.accept_cod,
             listings,
             items,
-            // TODO: get collections from db
-            collections: vec![],
+            collections,
         })
     }
 }

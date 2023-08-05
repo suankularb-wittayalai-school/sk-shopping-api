@@ -3,6 +3,7 @@ use mysk_lib::models::common::requests::FetchLevel;
 use parallel_stream::prelude::*;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use uuid::Uuid;
 
 use super::{collection::Collection, listing::Listing, shop::Shop};
 
@@ -55,7 +56,7 @@ pub struct DetailedItem {
     pub images_url: Vec<String>,
     pub shop: Shop,
     pub listing: Listing,
-    pub collection: Collection,
+    pub collections: Vec<Collection>,
 }
 
 impl From<db::ItemTable> for IdOnlyItem {
@@ -262,6 +263,26 @@ impl DetailedItem {
             .map(|row| row.get::<String, _>("image_url"))
             .collect();
 
+        let collections = sqlx::query(
+            r#"
+            SELECT collection_id FROM collection_listings WHERE listing_id = $1
+            "#,
+        )
+        .bind(item.listing_id)
+        .fetch_all(pool)
+        .await?
+        .into_iter()
+        .map(|row| row.get::<Uuid, _>("collection_id"))
+        .collect();
+
+        let collections = Collection::get_by_ids(
+            pool,
+            collections,
+            descendant_fetch_level,
+            Some(&FetchLevel::IdOnly),
+        )
+        .await?;
+
         Ok(DetailedItem {
             id: item.id,
             name: item.name,
@@ -281,17 +302,11 @@ impl DetailedItem {
                 Some(&FetchLevel::IdOnly),
             )
             .await?,
-            // TODO: get shops, and collection values from db
+            collections,
+            // TODO: get shops values from db
             shop: Shop::from_table(
                 pool,
                 super::shop::db::ShopTable::default(),
-                descendant_fetch_level,
-                Some(&FetchLevel::IdOnly),
-            )
-            .await?,
-            collection: Collection::from_table(
-                pool,
-                super::collection::db::CollectionTable::default(),
                 descendant_fetch_level,
                 Some(&FetchLevel::IdOnly),
             )

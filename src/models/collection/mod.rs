@@ -4,6 +4,8 @@ use mysk_lib::models::common::requests::FetchLevel;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 
+use self::db::CollectionTable;
+
 use super::{item::Item, listing::Listing, shop::Shop};
 
 pub(crate) mod db;
@@ -196,5 +198,35 @@ impl Collection {
             )),
             None => Ok(Collection::IdOnly(collection.into())),
         }
+    }
+
+    pub async fn get_by_id(
+        pool: &sqlx::PgPool,
+        ids: sqlx::types::Uuid,
+        fetch_level: Option<&FetchLevel>,
+        descendant_fetch_level: Option<&FetchLevel>,
+    ) -> Result<Self, sqlx::Error> {
+        let collection = CollectionTable::get_by_id(pool, ids).await?;
+
+        Self::from_table(pool, collection, fetch_level, descendant_fetch_level).await
+    }
+
+    pub async fn get_by_ids(
+        pool: &sqlx::PgPool,
+        ids: Vec<sqlx::types::Uuid>,
+        fetch_level: Option<&FetchLevel>,
+        descendant_fetch_level: Option<&FetchLevel>,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        let collections = CollectionTable::get_by_ids(pool, ids).await?;
+
+        let mut result = Vec::with_capacity(collections.len());
+
+        for collection in collections {
+            result.push(
+                Self::from_table(pool, collection, fetch_level, descendant_fetch_level).await?,
+            );
+        }
+
+        Ok(result)
     }
 }
