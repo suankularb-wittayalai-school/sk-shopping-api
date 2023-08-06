@@ -416,17 +416,6 @@ impl Item {
         descendant_fetch_level: Option<&FetchLevel>,
     ) -> Result<Vec<Self>, sqlx::Error> {
         let items = db::ItemTable::query(pool, filter, sorting, pagination).await?;
-        // let result = items
-        //     .into_par_stream()
-        //     .map(|item| async move {
-        //         let data = Self::from_table(pool, item, level, descendant_fetch_level).await;
-        //         match data {
-        //             Ok(data) => Some(data),
-        //             Err(_) => None,
-        //         }
-        //     })
-        //     .collect::<Vec<_>>()
-        //     .await;
 
         // parallel stream is not working due to lifetime issue
         let mut result = vec![];

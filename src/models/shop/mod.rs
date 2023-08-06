@@ -1,15 +1,22 @@
 use std::vec;
 
 use async_recursion::async_recursion;
-use mysk_lib::models::common::{requests::FetchLevel, string::MultiLangString};
+use mysk_lib::models::common::{
+    requests::{FetchLevel, FilterConfig, PaginationConfig, SortingConfig},
+    string::MultiLangString,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 
-use self::db::ShopTable;
+use self::{
+    db::ShopTable,
+    request::{QueryableShop, SortableShop},
+};
 
 use super::{collection::Collection, item::Item, listing::Listing};
 
 pub(crate) mod db;
+pub(crate) mod request;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IdOnlyShop {
@@ -215,6 +222,24 @@ impl Shop {
         let shop = ShopTable::get_by_id(pool, ids).await?;
 
         Self::from_table(pool, shop, fetch_level, descendant_fetch_level).await
+    }
+
+    pub async fn query(
+        pool: &sqlx::PgPool,
+        filter: &Option<FilterConfig<QueryableShop>>,
+        sorting: &Option<SortingConfig<SortableShop>>,
+        pagination: &Option<PaginationConfig>,
+        level: Option<&FetchLevel>,
+        descendant_fetch_level: Option<&FetchLevel>,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        let shops = db::ShopTable::query(pool, filter, sorting, pagination).await?;
+
+        let mut result = vec![];
+        for shop in shops {
+            let data = Self::from_table(pool, shop, level, descendant_fetch_level).await?;
+            result.push(data);
+        }
+        Ok(result)
     }
 }
 
