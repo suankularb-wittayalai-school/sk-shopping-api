@@ -6,12 +6,12 @@ use mysk_lib::models::common::{
 use uuid::Uuid;
 
 use crate::{
-    models::item::{request::QueryableItem, Item},
+    models::item::{
+        request::{QueryableItem, SortableItem},
+        Item,
+    },
     AppState,
 };
-
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub enum SortableItem {}
 
 #[get("/items")]
 pub async fn query_items(
@@ -57,6 +57,7 @@ pub async fn query_items(
     let items = Item::query(
         pool,
         &request_query.filter,
+        &request_query.sorting,
         &request_query.pagination,
         Some(&fetch_level),
         Some(&descendant_fetch_level),

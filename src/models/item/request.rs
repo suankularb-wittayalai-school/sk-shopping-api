@@ -14,9 +14,11 @@ pub struct QueryableItem {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum SortableItem {
     Id,
     Name,
-    Stock,
+    CreatedAt,
+    // Stock,
     Price,
 }

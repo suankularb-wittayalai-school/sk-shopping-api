@@ -1,11 +1,12 @@
 use chrono::{DateTime, Utc};
-use mysk_lib::models::common::requests::{FetchLevel, FilterConfig, PaginationConfig};
-use parallel_stream::prelude::*;
+use mysk_lib::models::common::requests::{
+    FetchLevel, FilterConfig, PaginationConfig, SortingConfig,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use uuid::Uuid;
 
-use self::request::QueryableItem;
+use self::request::{QueryableItem, SortableItem};
 
 use super::{collection::Collection, listing::Listing, shop::Shop};
 
@@ -409,11 +410,12 @@ impl Item {
     pub async fn query(
         pool: &sqlx::PgPool,
         filter: &Option<FilterConfig<QueryableItem>>,
+        sorting: &Option<SortingConfig<SortableItem>>,
         pagination: &Option<PaginationConfig>,
         level: Option<&FetchLevel>,
         descendant_fetch_level: Option<&FetchLevel>,
     ) -> Result<Vec<Self>, sqlx::Error> {
-        let items = db::ItemTable::query(pool, filter, pagination).await?;
+        let items = db::ItemTable::query(pool, filter, sorting, pagination).await?;
         // let result = items
         //     .into_par_stream()
         //     .map(|item| async move {

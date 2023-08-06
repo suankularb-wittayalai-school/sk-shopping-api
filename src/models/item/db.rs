@@ -1,11 +1,11 @@
 use chrono::{DateTime, Utc};
-use mysk_lib::models::common::requests::{FilterConfig, PaginationConfig};
+use mysk_lib::models::common::requests::{FilterConfig, PaginationConfig, SortingConfig};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
 use crate::models::common::RangeQuery;
 
-use super::request::QueryableItem;
+use super::request::{QueryableItem, SortableItem};
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct ItemTable {
@@ -205,6 +205,45 @@ impl ItemTable {
         )
     }
 
+    fn append_order_clause(query: &mut String, order: &Option<SortingConfig<SortableItem>>) {
+        let order = match order {
+            Some(order) => order,
+            None => return,
+        };
+
+        let sort_vec = match order.by.is_empty() {
+            true => vec![SortableItem::Id],
+            false => order.by.clone(),
+        };
+
+        if !sort_vec.is_empty() {
+            query.push_str(" ORDER BY ");
+
+            let mut first = true;
+            for s in sort_vec {
+                if !first {
+                    query.push_str(", ");
+                }
+
+                match s {
+                    SortableItem::Id => query.push_str("id"),
+                    SortableItem::Name => query.push_str("name"),
+                    SortableItem::CreatedAt => query.push_str("variant_name"),
+                    SortableItem::Price => query.push_str("price"),
+                    // SortableItem::Stock => query.push_str(" stock"),
+                }
+
+                first = false;
+            }
+
+            match order.ascending {
+                Some(true) => query.push_str(" ASC"),
+                Some(false) => query.push_str(" DESC"),
+                None => query.push_str(" ASC"),
+            }
+        }
+    }
+
     fn append_limit_clause(
         query: &mut String,
         pagination: &Option<PaginationConfig>,
@@ -237,7 +276,7 @@ impl ItemTable {
     pub async fn query(
         pool: &sqlx::PgPool,
         filter: &Option<FilterConfig<QueryableItem>>,
-        // sorting: &Option<SortingConfig<Sortable>>,
+        sorting: &Option<SortingConfig<SortableItem>>,
         pagination: &Option<PaginationConfig>,
     ) -> Result<Vec<Self>, sqlx::Error> {
         let mut query = Self::get_default_query();
@@ -249,10 +288,11 @@ impl ItemTable {
                 (0, (Vec::new(), Vec::new(), Vec::new(), Vec::new()))
             };
 
-        dbg!(query.clone());
-        dbg!(&string_params);
+        // dbg!(query.clone());
+        // dbg!(&string_params);
 
         // Sorting
+        Self::append_order_clause(&mut query, sorting);
 
         // Pagination
         let (_params_count, pagination_params) =
