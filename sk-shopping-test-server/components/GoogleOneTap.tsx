@@ -7,7 +7,7 @@ import { useOneTapSignin } from "@/utils/helpers/useOneTapSignin";
  * @returns A hidden `<div>`.
  */
 const GoogleOneTap = () => {
-  useOneTapSignin({ redirect: false, parentContainerID: "one-tap" });
+  useOneTapSignin({ parentContainerID: "one-tap" });
 
   return (
     <div

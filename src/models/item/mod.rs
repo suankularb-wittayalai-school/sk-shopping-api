@@ -1,13 +1,16 @@
 use chrono::{DateTime, Utc};
-use mysk_lib::models::common::requests::FetchLevel;
+use mysk_lib::models::common::requests::{FetchLevel, FilterConfig, PaginationConfig};
 use parallel_stream::prelude::*;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use uuid::Uuid;
 
+use self::request::QueryableItem;
+
 use super::{collection::Collection, listing::Listing, shop::Shop};
 
 pub(crate) mod db;
+pub(crate) mod request;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IdOnlyItem {
@@ -382,6 +385,35 @@ impl Item {
         descendant_fetch_level: Option<&FetchLevel>,
     ) -> Result<Vec<Self>, sqlx::Error> {
         let items = db::ItemTable::get_by_ids(pool, ids).await?;
+        // let result = items
+        //     .into_par_stream()
+        //     .map(|item| async move {
+        //         let data = Self::from_table(pool, item, level, descendant_fetch_level).await;
+        //         match data {
+        //             Ok(data) => Some(data),
+        //             Err(_) => None,
+        //         }
+        //     })
+        //     .collect::<Vec<_>>()
+        //     .await;
+
+        // parallel stream is not working due to lifetime issue
+        let mut result = vec![];
+        for item in items {
+            let data = Self::from_table(pool, item, level, descendant_fetch_level).await?;
+            result.push(data);
+        }
+        Ok(result)
+    }
+
+    pub async fn query(
+        pool: &sqlx::PgPool,
+        filter: &Option<FilterConfig<QueryableItem>>,
+        pagination: &Option<PaginationConfig>,
+        level: Option<&FetchLevel>,
+        descendant_fetch_level: Option<&FetchLevel>,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        let items = db::ItemTable::query(pool, filter, pagination).await?;
         // let result = items
         //     .into_par_stream()
         //     .map(|item| async move {

@@ -1,6 +1,7 @@
 pub(crate) mod auth;
 pub(crate) mod category;
 pub(crate) mod collection;
+pub(crate) mod common;
 pub(crate) mod item;
 pub(crate) mod listing;
 pub(crate) mod order;

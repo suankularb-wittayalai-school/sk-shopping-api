@@ -1,7 +1,7 @@
 use actix_web::{get, web, HttpResponse, Responder};
 use mysk_lib::models::common::{
     requests::{FetchLevel, RequestType},
-    response::{ErrorResponseType, ErrorType, MetadataType},
+    response::{ErrorResponseType, ErrorType, MetadataType, PaginationType, ResponseType},
 };
 use uuid::Uuid;
 
@@ -38,7 +38,10 @@ pub async fn listing_detail(
     .await;
 
     match listing {
-        Ok(listing) => Ok(HttpResponse::Ok().json(listing)),
+        Ok(listing) => Ok(HttpResponse::Ok().json(ResponseType::new(
+            listing,
+            Some(MetadataType::new(None::<PaginationType>)),
+        ))),
         Err(e) => {
             let response: ErrorResponseType = ErrorResponseType::new(
                 ErrorType {

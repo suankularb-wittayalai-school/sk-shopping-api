@@ -1,5 +1,7 @@
 use actix_web::{get, web, HttpResponse, Responder};
-use mysk_lib::models::common::response::{ErrorResponseType, ErrorType, MetadataType};
+use mysk_lib::models::common::response::{
+    ErrorResponseType, ErrorType, MetadataType, PaginationType, ResponseType,
+};
 use uuid::Uuid;
 
 use crate::{models::category::Category, AppState};
@@ -14,7 +16,10 @@ pub async fn all_categories(data: web::Data<AppState>) -> Result<impl Responder,
     let categories = Category::get_all(pool).await;
 
     match categories {
-        Ok(categories) => Ok(HttpResponse::Ok().json(categories)),
+        Ok(categories) => Ok(HttpResponse::Ok().json(ResponseType::new(
+            categories,
+            Some(MetadataType::new(None::<PaginationType>)),
+        ))),
         Err(e) => {
             let response: ErrorResponseType = ErrorResponseType::new(
                 ErrorType {

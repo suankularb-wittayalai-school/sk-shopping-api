@@ -24,6 +24,7 @@ pub struct CompactListing {
     pub thumbnail_url: Option<String>,
     pub price: i64,
     pub discounted_price: Option<i64>,
+    pub is_hidden: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -41,6 +42,7 @@ pub struct DefaultListing {
     pub amount_sold: i64,
     pub variants: Vec<Item>,
     pub categories: Vec<MultiLangString>,
+    pub is_hidden: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -59,6 +61,7 @@ pub struct DetailedListing {
     pub variants: Vec<Item>,
     pub collections: Vec<Collection>,
     pub categories: Vec<MultiLangString>,
+    pub is_hidden: bool,
 }
 
 impl From<db::ListingTable> for IdOnlyListing {
@@ -138,6 +141,7 @@ impl CompactListing {
             id: listing.id,
             name: listing.name,
             description: listing.description,
+            is_hidden: listing.is_hidden,
             shop: Shop::from_table(
                 pool,
                 super::shop::db::ShopTable::default(),
@@ -276,6 +280,7 @@ impl DefaultListing {
             name: listing.name,
             description: listing.description,
             thumbnail_url: listing.thumbnail_url,
+            is_hidden: listing.is_hidden,
             variants,
             preorder_start,
             preorder_end,
@@ -437,6 +442,7 @@ impl DetailedListing {
             name: listing.name,
             description: listing.description,
             thumbnail_url: listing.thumbnail_url,
+            is_hidden: listing.is_hidden,
             variants,
             preorder_start,
             preorder_end,

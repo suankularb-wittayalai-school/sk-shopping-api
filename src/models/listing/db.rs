@@ -10,6 +10,7 @@ pub struct ListingTable {
     pub description: String,
     pub thumbnail_url: Option<String>,
     pub shop_id: sqlx::types::Uuid,
+    pub is_hidden: bool,
 }
 
 impl ListingTable {

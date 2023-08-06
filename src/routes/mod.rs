@@ -18,6 +18,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(auth::google::google_oauth_handler);
     cfg.service(auth::user::get_user);
     cfg.service(items::item_detail::item_detail);
+    cfg.service(items::query_items::query_items);
     cfg.service(listings::listing_detail::listing_detail);
     cfg.service(collections::collection_detail::collection_detail);
     cfg.service(shops::shop_detail::shop_detail);
