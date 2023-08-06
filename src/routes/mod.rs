@@ -17,6 +17,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(health::health_check);
     cfg.service(auth::google::google_oauth_handler);
     cfg.service(auth::user::get_user);
+    cfg.service(auth::user_wishlists::get_user_wishlists);
     cfg.service(items::item_detail::item_detail);
     cfg.service(items::query_items::query_items);
     cfg.service(listings::listing_detail::listing_detail);
