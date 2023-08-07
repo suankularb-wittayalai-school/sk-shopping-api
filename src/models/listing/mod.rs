@@ -77,82 +77,23 @@ impl CompactListing {
         listing: db::ListingTable,
         descendant_fetch_level: Option<&'a FetchLevel>,
     ) -> Result<Self, sqlx::Error> {
-        let variants_id = sqlx::query(
-            r#"
-            SELECT * FROM items
-            WHERE listing_id = $1
-            "#,
-        )
-        .bind(listing.id)
-        .fetch_all(pool)
-        .await?;
-
-        let variants_id = variants_id
-            .into_iter()
-            .map(|item| item.get("id"))
-            .collect::<Vec<sqlx::types::Uuid>>();
-
-        let variants = Item::get_by_ids(
-            pool,
-            variants_id,
-            Some(&FetchLevel::Compact),
-            Some(&FetchLevel::IdOnly),
-        )
-        .await?;
-
-        // get price being the lowest price of all variants
-        let price = variants
-            .iter()
-            .map(|item| match item {
-                Item::Compact(item) => item.price,
-                Item::Default(item) => item.price,
-                Item::Detailed(item) => item.price,
-                Item::IdOnly(_item) => unreachable!("Item::IdOnly should not be in variants"),
-            })
-            .min()
-            .unwrap_or_default();
-
-        let discounted_price = variants
-            .iter()
-            .map(|item| match item {
-                Item::Compact(item) => item.discounted_price,
-                Item::Default(item) => item.discounted_price,
-                Item::Detailed(item) => item.discounted_price,
-                Item::IdOnly(_item) => unreachable!("Item::IdOnly should not be in variants"),
-            })
-            .filter(|item| item.is_some())
-            .min()
-            .unwrap_or_default();
-        // dbg!(&variants);
-
-        // get is_sold_out being the sum of all variants lifetime_stock - amount_sold
-        let is_sold_out = variants
-            .iter()
-            .map(|item| match item {
-                Item::Compact(item) => item.lifetime_stock - item.amount_sold,
-                Item::Default(item) => item.lifetime_stock - item.amount_sold,
-                Item::Detailed(item) => item.lifetime_stock - item.amount_sold,
-                Item::IdOnly(_item) => unreachable!("Item::IdOnly should not be in variants"),
-            })
-            .sum::<i64>()
-            <= 0;
-
         Ok(Self {
             id: listing.id,
             name: listing.name,
             description: listing.description,
             is_hidden: listing.is_hidden,
-            shop: Shop::from_table(
+            shop: Shop::get_by_id(
                 pool,
-                super::shop::db::ShopTable::default(),
+                listing.shop_id,
                 descendant_fetch_level,
                 Some(&FetchLevel::IdOnly),
             )
             .await?,
             thumbnail_url: listing.thumbnail_url,
-            price,
-            discounted_price,
-            is_sold_out,
+            price: listing.price,
+            discounted_price: listing.discounted_price,
+            is_sold_out: listing.lifetime_stock.unwrap_or(0) - listing.amount_sold.unwrap_or(0)
+                == 0,
         })
     }
 }
@@ -187,81 +128,6 @@ impl DefaultListing {
         )
         .await?;
 
-        // get default variants for other fields
-        let default_variants = Item::get_by_ids(
-            pool,
-            variants_id,
-            Some(&FetchLevel::Default),
-            Some(&FetchLevel::IdOnly),
-        )
-        .await?;
-
-        // get price being the lowest price of all variants
-        let price = default_variants
-            .iter()
-            .map(|item| match item {
-                Item::Compact(item) => item.price,
-                Item::Default(item) => item.price,
-                Item::Detailed(item) => item.price,
-                Item::IdOnly(_item) => unreachable!("Item::IdOnly should not be in variants"),
-            })
-            .min()
-            .unwrap_or_default();
-
-        let discounted_price = default_variants
-            .iter()
-            .map(|item| match item {
-                Item::Compact(item) => item.discounted_price,
-                Item::Default(item) => item.discounted_price,
-                Item::Detailed(item) => item.discounted_price,
-                Item::IdOnly(_item) => unreachable!("Item::IdOnly should not be in variants"),
-            })
-            .filter(|item| item.is_some())
-            .min()
-            .unwrap_or_default();
-
-        // get preorder_start being the earliest preorder_start of all variants
-        let preorder_start = default_variants
-            .iter()
-            .map(|item| match item {
-                Item::Default(item) => item.preorder_start,
-                Item::Detailed(item) => item.preorder_start,
-                _ => unreachable!("Item::IdOnly and Item::Compact should not be in variants"),
-            })
-            .min()
-            .unwrap_or_default();
-
-        // get preorder_end being the latest preorder_end of all variants
-        let preorder_end = default_variants
-            .iter()
-            .map(|item| match item {
-                Item::Default(item) => item.preorder_end,
-                Item::Detailed(item) => item.preorder_end,
-                _ => unreachable!("Item::IdOnly and Item::Compact should not be in variants"),
-            })
-            .max()
-            .unwrap_or_default();
-
-        // get lifetime_stock being the sum of all variants lifetime_stock
-        let lifetime_stock = default_variants
-            .iter()
-            .map(|item| match item {
-                Item::Default(item) => item.lifetime_stock,
-                Item::Detailed(item) => item.lifetime_stock,
-                _ => unreachable!("Item::IdOnly and Item::Compact should not be in variants"),
-            })
-            .sum::<i64>();
-
-        // get amount_sold being the sum of all variants amount_sold
-        let amount_sold = default_variants
-            .iter()
-            .map(|item| match item {
-                Item::Default(item) => item.amount_sold,
-                Item::Detailed(item) => item.amount_sold,
-                _ => unreachable!("Item::IdOnly and Item::Compact should not be in variants"),
-            })
-            .sum::<i64>();
-
         let categories = sqlx::query(
             r#"
             SELECT * FROM listing_categories INNER JOIN categories ON listing_categories.category_id = categories.id
@@ -282,12 +148,12 @@ impl DefaultListing {
             thumbnail_url: listing.thumbnail_url,
             is_hidden: listing.is_hidden,
             variants,
-            preorder_start,
-            preorder_end,
-            price,
-            discounted_price,
-            lifetime_stock,
-            amount_sold,
+            preorder_start: listing.preorder_start,
+            preorder_end: listing.preorder_end,
+            price: listing.price,
+            discounted_price: listing.discounted_price,
+            lifetime_stock: listing.lifetime_stock.unwrap_or(0),
+            amount_sold: listing.amount_sold.unwrap_or(0),
             categories,
             shop: Shop::get_by_id(
                 pool,
@@ -330,80 +196,6 @@ impl DetailedListing {
         )
         .await?;
 
-        // get default variants for other fields
-        let default_variants = Item::get_by_ids(
-            pool,
-            variants_id,
-            Some(&FetchLevel::Default),
-            Some(&FetchLevel::IdOnly),
-        )
-        .await?;
-
-        // get price being the lowest price of all variants
-        let price = default_variants
-            .iter()
-            .map(|item| match item {
-                Item::Compact(item) => item.price,
-                Item::Default(item) => item.price,
-                Item::Detailed(item) => item.price,
-                Item::IdOnly(_item) => unreachable!("Item::IdOnly should not be in variants"),
-            })
-            .min()
-            .unwrap_or_default();
-
-        let discounted_price = default_variants
-            .iter()
-            .map(|item| match item {
-                Item::Compact(item) => item.discounted_price,
-                Item::Default(item) => item.discounted_price,
-                Item::Detailed(item) => item.discounted_price,
-                Item::IdOnly(_item) => unreachable!("Item::IdOnly should not be in variants"),
-            })
-            .filter(|item| item.is_some())
-            .min()
-            .unwrap_or_default();
-
-        // get preorder_start being the earliest preorder_start of all variants
-        let preorder_start = default_variants
-            .iter()
-            .map(|item| match item {
-                Item::Default(item) => item.preorder_start,
-                Item::Detailed(item) => item.preorder_start,
-                _ => unreachable!("Item::IdOnly and Item::Compact should not be in variants"),
-            })
-            .min()
-            .unwrap_or_default();
-
-        // get preorder_end being the latest preorder_end of all variants
-        let preorder_end = default_variants
-            .iter()
-            .map(|item| match item {
-                Item::Default(item) => item.preorder_end,
-                Item::Detailed(item) => item.preorder_end,
-                _ => unreachable!("Item::IdOnly and Item::Compact should not be in variants"),
-            })
-            .max()
-            .unwrap_or_default();
-
-        // get lifetime_stock being the sum of all variants lifetime_stock
-        let lifetime_stock = default_variants
-            .iter()
-            .map(|item| match item {
-                Item::Default(item) => item.lifetime_stock,
-                Item::Detailed(item) => item.lifetime_stock,
-                _ => unreachable!("Item::IdOnly and Item::Compact should not be in variants"),
-            })
-            .sum::<i64>();
-
-        // get amount_sold being the sum of all variants amount_sold
-        let amount_sold = default_variants
-            .iter()
-            .map(|item| match item {
-                Item::Default(item) => item.amount_sold,
-                Item::Detailed(item) => item.amount_sold,
-                _ => unreachable!("Item::IdOnly and Item::Compact should not be in variants"),
-            })
-            .sum::<i64>();
         let categories = sqlx::query(
             r#"
             SELECT * FROM listing_categories INNER JOIN categories ON listing_categories.category_id = categories.id
@@ -444,12 +236,12 @@ impl DetailedListing {
             thumbnail_url: listing.thumbnail_url,
             is_hidden: listing.is_hidden,
             variants,
-            preorder_start,
-            preorder_end,
-            price,
-            discounted_price,
-            lifetime_stock,
-            amount_sold,
+            preorder_start: listing.preorder_start,
+            preorder_end: listing.preorder_end,
+            price: listing.price,
+            discounted_price: listing.discounted_price,
+            lifetime_stock: listing.lifetime_stock.unwrap_or(0),
+            amount_sold: listing.amount_sold.unwrap_or(0),
             categories,
             shop: Shop::get_by_id(
                 pool,
