@@ -34,19 +34,19 @@ impl CompactOrder {
         //     .into_iter()
         //     .map(|row| row.get::<sqlx::types::Uuid, _>("item_id"))
         // .collect::<Vec<sqlx::types::Uuid>>();
-        let (items_id, item_amount): (Vec<sqlx::types::Uuid>, Vec<i32>) = items_db
+        let (items_id, item_amount): (Vec<sqlx::types::Uuid>, Vec<i64>) = items_db
             .into_iter()
             .map(|row| {
                 (
                     row.get::<sqlx::types::Uuid, _>("item_id"),
-                    row.get::<i32, _>("amount"),
+                    row.get::<i64, _>("amount"),
                 )
             })
             .unzip();
 
         let price_per_item = sqlx::query(
             r#"
-            SELECT item_id, price, discounted_price
+            SELECT id, price, discounted_price
             FROM items
             WHERE id = ANY($1)
             "#,
@@ -58,18 +58,21 @@ impl CompactOrder {
         let total_price = price_per_item
             .into_iter()
             .map(|row| {
-                let item_id = row.get::<sqlx::types::Uuid, _>("item_id");
+                let item_id = row.get::<sqlx::types::Uuid, _>("id");
                 let price = row.get::<i64, _>("price");
-                let discounted_price = row.get::<i64, _>("discounted_price");
-                let amount = item_amount
+                let discounted_price = row.get::<Option<i64>, _>("discounted_price");
+                let amount_index = items_id
                     .iter()
-                    .find(|&&amount| items_id[amount as usize] == item_id)
+                    .position(|item_id_| item_id_ == &item_id)
                     .unwrap();
-                if discounted_price == 0 {
-                    price * *amount as i64
-                } else {
-                    discounted_price * *amount as i64
-                }
+
+                let amount = item_amount[amount_index];
+                // if discounted_price == 0 {
+                //     price * *amount as i64
+                // } else {
+                //     discounted_price * *amount as i64
+                // }
+                discounted_price.unwrap_or(price) * amount
             })
             .sum::<i64>();
         Ok(Self {
