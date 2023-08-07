@@ -7,7 +7,10 @@ use sqlx::{PgPool, Row};
 use crate::models::{
     auth::user::{User, UserTable},
     item::Item,
-    order::db::{DeliveryType, OrderStatus},
+    order::{
+        db::{DeliveryType, OrderStatus},
+        OrderItem,
+    },
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -17,7 +20,7 @@ pub struct DefaultOrder {
     pub shipment_status: OrderStatus,
     pub total_price: i64,
     pub delivery_type: DeliveryType,
-    pub items: Vec<Item>,
+    pub items: Vec<OrderItem>,
     pub shipping_address_line_1: Option<String>,
     pub shipping_address_line_2: Option<String>,
     pub zip_code: Option<String>,
@@ -35,7 +38,7 @@ impl DefaultOrder {
     ) -> Result<Self, sqlx::Error> {
         let items_db = sqlx::query(
             r#"
-            SELECT item_id, amount
+            SELECT id, amount
             FROM order_items
             WHERE order_id = $1
             "#,
@@ -48,7 +51,7 @@ impl DefaultOrder {
         //     .into_iter()
         //     .map(|row| row.get::<sqlx::types::Uuid, _>("item_id"))
         // .collect::<Vec<sqlx::types::Uuid>>();
-        let (items_id, item_amount): (Vec<sqlx::types::Uuid>, Vec<i32>) = items_db
+        let (order_items_id, item_amount): (Vec<sqlx::types::Uuid>, Vec<i32>) = items_db
             .into_iter()
             .map(|row| {
                 (
@@ -58,13 +61,13 @@ impl DefaultOrder {
             })
             .unzip();
 
-        let items = Item::get_by_ids(
-            pool,
-            items_id.clone(),
-            descendant_fetch_level,
-            Some(&FetchLevel::IdOnly),
-        )
-        .await?;
+        let items =
+            OrderItem::get_by_ids(pool, order_items_id.clone(), descendant_fetch_level).await?;
+
+        let items_id = items
+            .iter()
+            .map(|item| item.id)
+            .collect::<Vec<sqlx::types::Uuid>>();
 
         let price_per_item = sqlx::query(
             r#"

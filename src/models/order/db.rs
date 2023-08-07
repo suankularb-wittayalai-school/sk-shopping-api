@@ -118,3 +118,30 @@ pub struct OrderTable {
     pub shipment_status: OrderStatus,
     pub delivery_type: DeliveryType,
 }
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct OrderItemTable {
+    pub id: Uuid,
+    pub created_at: Option<DateTime<Utc>>,
+    pub order_id: sqlx::types::Uuid,
+    pub item_id: sqlx::types::Uuid,
+    pub amount: i64,
+}
+
+impl OrderItemTable {
+    pub async fn get_by_ids(
+        pool: &sqlx::PgPool,
+        ids: Vec<sqlx::types::Uuid>,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        let result = sqlx::query_as::<_, Self>(
+            r#"
+            SELECT * FROM order_items
+            WHERE id = ANY($1)
+            "#,
+        )
+        .bind(ids)
+        .fetch_all(pool)
+        .await?;
+        Ok(result)
+    }
+}

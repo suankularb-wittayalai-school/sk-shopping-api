@@ -1,9 +1,59 @@
 use mysk_lib::models::common::requests::FetchLevel;
 use serde::{Deserialize, Serialize};
 use sqlx::pool;
+use uuid::Uuid;
+
+use self::db::OrderItemTable;
+
+use super::item::Item;
 
 pub(crate) mod db;
 pub(crate) mod fetch_levels;
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct OrderItem {
+    pub id: Uuid,
+    pub item: Item,
+    pub amount: i64,
+}
+
+impl OrderItem {
+    pub async fn from_table(
+        pool: &sqlx::PgPool,
+        order_item: db::OrderItemTable,
+        descendant_fetch_level: Option<&FetchLevel>,
+    ) -> Result<Self, sqlx::Error> {
+        let item = Item::get_by_id(
+            pool,
+            order_item.item_id,
+            descendant_fetch_level,
+            Some(&FetchLevel::IdOnly),
+        )
+        .await?;
+
+        Ok(Self {
+            id: order_item.id,
+            item,
+            amount: order_item.amount,
+        })
+    }
+
+    pub async fn get_by_ids(
+        pool: &sqlx::PgPool,
+        ids: Vec<sqlx::types::Uuid>,
+        descendant_fetch_level: Option<&FetchLevel>,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        let order_items_db = OrderItemTable::get_by_ids(pool, ids).await?;
+
+        let mut order_items = Vec::new();
+
+        for order_item in order_items_db {
+            order_items.push(Self::from_table(pool, order_item, descendant_fetch_level).await?);
+        }
+
+        Ok(order_items)
+    }
+}
 
 #[derive(Debug, Deserialize)]
 pub enum Order {
