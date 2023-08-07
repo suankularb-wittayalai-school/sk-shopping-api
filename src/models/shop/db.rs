@@ -232,7 +232,7 @@ impl ShopTable {
                     SortableShop::Id => query.push_str("id"),
                     SortableShop::NameEn => query.push_str("name_en"),
                     SortableShop::NameTh => query.push_str("name_ar"),
-                    SortableShop::CreatedAt => query.push_str("variant_name"),
+                    SortableShop::CreatedAt => query.push_str("created_at"),
                     // SortableItem::Stock => query.push_str(" stock"),
                 }
 

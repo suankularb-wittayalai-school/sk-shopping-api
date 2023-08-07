@@ -285,7 +285,7 @@ impl ListingTable {
                 match s {
                     SortableListing::Id => query.push_str("id"),
                     SortableListing::Name => query.push_str("name"),
-                    SortableListing::CreatedAt => query.push_str("variant_name"),
+                    SortableListing::CreatedAt => query.push_str("created_at"),
                     SortableListing::Price => query.push_str("price"),
                     SortableListing::Stock => query.push_str(" lifetime_stock"),
                 }

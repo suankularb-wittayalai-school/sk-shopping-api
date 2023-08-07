@@ -1,14 +1,20 @@
 use async_recursion::async_recursion;
 use chrono::{DateTime, Utc};
-use mysk_lib::models::common::requests::FetchLevel;
+use mysk_lib::models::common::requests::{
+    FetchLevel, FilterConfig, PaginationConfig, SortingConfig,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 
-use self::db::CollectionTable;
+use self::{
+    db::CollectionTable,
+    request::{QueryableCollection, SortableCollection},
+};
 
 use super::{item::Item, listing::Listing, shop::Shop};
 
 pub(crate) mod db;
+pub(crate) mod request;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IdOnlyCollection {
@@ -225,6 +231,25 @@ impl Collection {
             );
         }
 
+        Ok(result)
+    }
+
+    pub async fn query(
+        pool: &sqlx::PgPool,
+        filter: &Option<FilterConfig<QueryableCollection>>,
+        sorting: &Option<SortingConfig<SortableCollection>>,
+        pagination: &Option<PaginationConfig>,
+        level: Option<&FetchLevel>,
+        descendant_fetch_level: Option<&FetchLevel>,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        let collections = db::CollectionTable::query(pool, filter, sorting, pagination).await?;
+
+        // parallel stream is not working due to lifetime issue
+        let mut result = vec![];
+        for collection in collections {
+            let data = Self::from_table(pool, collection, level, descendant_fetch_level).await?;
+            result.push(data);
+        }
         Ok(result)
     }
 }

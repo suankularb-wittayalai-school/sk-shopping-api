@@ -228,7 +228,7 @@ impl ItemTable {
                 match s {
                     SortableItem::Id => query.push_str("id"),
                     SortableItem::Name => query.push_str("name"),
-                    SortableItem::CreatedAt => query.push_str("variant_name"),
+                    SortableItem::CreatedAt => query.push_str("created_at"),
                     SortableItem::Price => query.push_str("price"),
                     // SortableItem::Stock => query.push_str(" stock"),
                 }
