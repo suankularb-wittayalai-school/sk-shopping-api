@@ -97,7 +97,7 @@ impl sqlx::Decode<'_, sqlx::Postgres> for DeliveryType {
     ) -> Result<Self, Box<dyn std::error::Error + 'static + Send + Sync>> {
         let s: String = <String as sqlx::Decode<sqlx::Postgres>>::decode(value)?;
         match s.as_str() {
-            "school_pickup" => Ok(Self::SchoolPickup),
+            "pick_up" => Ok(Self::SchoolPickup),
             "delivery" => Ok(Self::Delivery),
             _ => Err("invalid delivery type".into()),
         }
@@ -110,13 +110,28 @@ pub struct OrderTable {
     pub created_at: Option<DateTime<Utc>>,
     pub buyer_id: sqlx::types::Uuid,
     pub is_paid: bool,
-    pub shipping_address_line_1: Option<String>,
-    pub shipping_address_line_2: Option<String>,
+    pub street_address_line_1: Option<String>,
+    pub street_address_line_2: Option<String>,
     pub zip_code: Option<String>,
     pub province: Option<String>,
     pub district: Option<String>,
     pub shipment_status: OrderStatus,
     pub delivery_type: DeliveryType,
+}
+
+impl OrderTable {
+    pub async fn get_by_id(pool: &sqlx::PgPool, id: Uuid) -> Result<Self, sqlx::Error> {
+        let result = sqlx::query_as::<_, Self>(
+            r#"
+            SELECT * FROM orders
+            WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .fetch_one(pool)
+        .await?;
+        Ok(result)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]

@@ -103,6 +103,17 @@ impl Order {
             ))),
         }
     }
+
+    pub async fn get_by_id(
+        pool: &pool::Pool<sqlx::Postgres>,
+        id: Uuid,
+        fetch_level: Option<&FetchLevel>,
+        descendant_fetch_level: Option<&FetchLevel>,
+    ) -> Result<Self, sqlx::Error> {
+        let order_db = db::OrderTable::get_by_id(pool, id).await?;
+
+        Self::from_table(pool, order_db, fetch_level, descendant_fetch_level).await
+    }
 }
 
 impl Serialize for Order {

@@ -9,6 +9,7 @@ mod doc;
 pub(crate) mod health;
 pub(crate) mod items;
 pub(crate) mod listings;
+pub(crate) mod orders;
 pub(crate) mod shops;
 
 use doc::ApiDoc;
@@ -29,6 +30,8 @@ pub fn config(cfg: &mut web::ServiceConfig) {
 
     cfg.service(shops::shop_detail::shop_detail);
     cfg.service(shops::query_shops::query_shops);
+
+    cfg.service(orders::order_detail::order_detail);
 
     cfg.service(category::all_categories::all_categories);
     cfg.service(

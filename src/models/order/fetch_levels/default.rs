@@ -1,5 +1,7 @@
 use std::vec;
 
+use unzip_n::unzip_n;
+
 use mysk_lib::models::common::requests::FetchLevel;
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
@@ -13,6 +15,8 @@ use crate::models::{
     },
 };
 
+unzip_n!(pub 3);
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DefaultOrder {
     pub id: sqlx::types::Uuid,
@@ -21,8 +25,8 @@ pub struct DefaultOrder {
     pub total_price: i64,
     pub delivery_type: DeliveryType,
     pub items: Vec<OrderItem>,
-    pub shipping_address_line_1: Option<String>,
-    pub shipping_address_line_2: Option<String>,
+    pub street_address_line_1: Option<String>,
+    pub street_address_line_2: Option<String>,
     pub zip_code: Option<String>,
     pub province: Option<String>,
     pub district: Option<String>,
@@ -38,7 +42,7 @@ impl DefaultOrder {
     ) -> Result<Self, sqlx::Error> {
         let items_db = sqlx::query(
             r#"
-            SELECT id, amount
+            SELECT id, amount, item_id
             FROM order_items
             WHERE order_id = $1
             "#,
@@ -51,27 +55,29 @@ impl DefaultOrder {
         //     .into_iter()
         //     .map(|row| row.get::<sqlx::types::Uuid, _>("item_id"))
         // .collect::<Vec<sqlx::types::Uuid>>();
-        let (order_items_id, item_amount): (Vec<sqlx::types::Uuid>, Vec<i32>) = items_db
+        let (order_items_id, items_id, item_amount): (
+            Vec<sqlx::types::Uuid>,
+            Vec<sqlx::types::Uuid>,
+            Vec<i64>,
+        ) = items_db
             .into_iter()
             .map(|row| {
                 (
+                    row.get::<sqlx::types::Uuid, _>("id"),
                     row.get::<sqlx::types::Uuid, _>("item_id"),
-                    row.get::<i32, _>("amount"),
+                    row.get::<i64, _>("amount"),
                 )
             })
-            .unzip();
+            .unzip_n_vec();
 
         let items =
             OrderItem::get_by_ids(pool, order_items_id.clone(), descendant_fetch_level).await?;
 
-        let items_id = items
-            .iter()
-            .map(|item| item.id)
-            .collect::<Vec<sqlx::types::Uuid>>();
+        dbg!(items_id.clone());
 
         let price_per_item = sqlx::query(
             r#"
-            SELECT item_id, price, discounted_price
+            SELECT id, price, discounted_price
             FROM items
             WHERE id = ANY($1)
             "#,
@@ -83,19 +89,21 @@ impl DefaultOrder {
         let total_price = price_per_item
             .into_iter()
             .map(|row| {
-                let item_id = row.get::<sqlx::types::Uuid, _>("item_id");
+                let item_id = row.get::<sqlx::types::Uuid, _>("id");
                 let price = row.get::<i64, _>("price");
                 let discounted_price = row.get::<Option<i64>, _>("discounted_price");
-                let amount = item_amount
+                let amount_index = items_id
                     .iter()
-                    .find(|&&amount| items_id[amount as usize] == item_id)
+                    .position(|item_id_| item_id_ == &item_id)
                     .unwrap();
+
+                let amount = item_amount[amount_index];
                 // if discounted_price == 0 {
                 //     price * *amount as i64
                 // } else {
                 //     discounted_price * *amount as i64
                 // }
-                discounted_price.unwrap_or(price) * *amount as i64
+                discounted_price.unwrap_or(price) * amount
             })
             .sum::<i64>();
 
@@ -131,8 +139,8 @@ impl DefaultOrder {
             total_price,
             delivery_type: order.delivery_type,
             items,
-            shipping_address_line_1: order.shipping_address_line_1,
-            shipping_address_line_2: order.shipping_address_line_2,
+            street_address_line_1: order.street_address_line_1,
+            street_address_line_2: order.street_address_line_2,
             zip_code: order.zip_code,
             province: order.province,
             district: order.district,
