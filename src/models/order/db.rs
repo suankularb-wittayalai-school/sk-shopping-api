@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
@@ -11,13 +13,24 @@ pub enum OrderStatus {
     Delivered,
 }
 
-impl OrderStatus {
-    pub fn to_string(&self) -> String {
-        match self {
-            Self::NotShippedOut => "not_shipped_out".to_string(),
-            Self::Pending => "pending".to_string(),
-            Self::Delivered => "delivered".to_string(),
-        }
+// impl OrderStatus {
+//     pub fn to_string(&self) -> String {
+//         match self {
+//             Self::NotShippedOut => "not_shipped_out".to_string(),
+//             Self::Pending => "pending".to_string(),
+//             Self::Delivered => "delivered".to_string(),
+//         }
+//     }
+// }
+
+impl Display for OrderStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Self::NotShippedOut => "not_shipped_out",
+            Self::Pending => "pending",
+            Self::Delivered => "delivered",
+        };
+        write!(f, "{}", s)
     }
 }
 
@@ -65,12 +78,13 @@ pub enum DeliveryType {
     Delivery,
 }
 
-impl DeliveryType {
-    pub fn to_string(&self) -> String {
-        match self {
-            Self::SchoolPickup => "school_pickup".to_string(),
-            Self::Delivery => "delivery".to_string(),
-        }
+impl Display for DeliveryType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Self::SchoolPickup => "school_pickup",
+            Self::Delivery => "delivery",
+        };
+        write!(f, "{}", s)
     }
 }
 
@@ -108,7 +122,7 @@ impl sqlx::Decode<'_, sqlx::Postgres> for DeliveryType {
 pub struct OrderTable {
     pub id: Uuid,
     pub created_at: Option<DateTime<Utc>>,
-    pub buyer_id: sqlx::types::Uuid,
+    pub buyer_id: Option<sqlx::types::Uuid>,
     pub is_paid: bool,
     pub street_address_line_1: Option<String>,
     pub street_address_line_2: Option<String>,
@@ -117,6 +131,7 @@ pub struct OrderTable {
     pub district: Option<String>,
     pub shipment_status: OrderStatus,
     pub delivery_type: DeliveryType,
+    pub receiver_name: String,
 }
 
 impl OrderTable {

@@ -72,12 +72,7 @@ impl Order {
     ) -> Result<Self, sqlx::Error> {
         match fetch_level {
             Some(FetchLevel::Compact) => Ok(Self::Compact(
-                fetch_levels::compact::CompactOrder::from_table(
-                    pool,
-                    order,
-                    descendant_fetch_level,
-                )
-                .await?,
+                fetch_levels::compact::CompactOrder::from_table(pool, order).await?,
             )),
             Some(FetchLevel::Default) => Ok(Self::Default(
                 fetch_levels::default::DefaultOrder::from_table(

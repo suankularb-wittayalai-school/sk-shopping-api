@@ -7,6 +7,7 @@ use crate::models::order::db::{DeliveryType, OrderStatus};
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompactOrder {
     pub id: sqlx::types::Uuid,
+    pub receiver_name: String,
     pub is_paid: bool,
     pub shipment_status: OrderStatus,
     pub total_price: i64,
@@ -17,7 +18,6 @@ impl CompactOrder {
     pub async fn from_table(
         pool: &PgPool,
         order: super::super::db::OrderTable,
-        descendant_fetch_level: Option<&FetchLevel>,
     ) -> Result<Self, sqlx::Error> {
         let items_db = sqlx::query(
             r#"
@@ -77,6 +77,7 @@ impl CompactOrder {
             .sum::<i64>();
         Ok(Self {
             id: order.id,
+            receiver_name: order.receiver_name,
             is_paid: order.is_paid,
             shipment_status: order.shipment_status,
             total_price,

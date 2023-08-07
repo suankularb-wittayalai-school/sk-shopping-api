@@ -1,5 +1,3 @@
-use std::vec;
-
 use unzip_n::unzip_n;
 
 use mysk_lib::models::common::requests::FetchLevel;
@@ -7,8 +5,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 
 use crate::models::{
-    auth::user::{User, UserTable},
-    item::Item,
+    auth::user::User,
     order::{
         db::{DeliveryType, OrderStatus},
         OrderItem,
@@ -31,7 +28,8 @@ pub struct DefaultOrder {
     pub province: Option<String>,
     pub district: Option<String>,
     pub pickup_location: Option<Vec<String>>,
-    pub buyer: User,
+    pub buyer: Option<User>,
+    pub receiver_name: String,
 }
 
 impl DefaultOrder {
@@ -132,6 +130,12 @@ impl DefaultOrder {
             Some(pickup_location)
         };
 
+        let user = if order.buyer_id.is_some() {
+            Some(User::from_id(order.buyer_id.unwrap(), pool, descendant_fetch_level).await?)
+        } else {
+            None
+        };
+
         Ok(Self {
             id: order.id,
             is_paid: order.is_paid,
@@ -145,7 +149,8 @@ impl DefaultOrder {
             province: order.province,
             district: order.district,
             pickup_location,
-            buyer: User::from_id(order.buyer_id, pool, descendant_fetch_level).await?,
+            buyer: user,
+            receiver_name: order.receiver_name,
         })
     }
 }

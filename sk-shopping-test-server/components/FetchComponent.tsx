@@ -43,6 +43,8 @@ export default function FetchComponent({
   async function sendRequest() {
     setLoading(true);
 
+    // console.log(body.length > 0 ? JSON.parse(body) : undefined);
+
     const response = await fetchAPI(
       path,
       query.length > 0 ? JSON.parse(query) : undefined,
@@ -51,7 +53,7 @@ export default function FetchComponent({
         headers: {
           "Content-Type": "application/json",
         },
-        body: body.length > 0 ? JSON.parse(body) : undefined,
+        body: body.length > 0 ? body : undefined,
       },
       accessToken
     );
@@ -100,7 +102,7 @@ export default function FetchComponent({
               label="Request Body"
               behavior="textarea"
               helperMsg="Enter request body in JSON format"
-              value={body ? JSON.stringify(body) : ""}
+              value={body ? body.toString() : ""}
               onChange={setBody}
               className="col-span-4"
             />
@@ -154,3 +156,4 @@ export default function FetchComponent({
     </>
   );
 }
+

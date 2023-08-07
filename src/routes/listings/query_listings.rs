@@ -52,7 +52,7 @@ pub async fn query_listings(
         None => FetchLevel::IdOnly,
     };
 
-    dbg!(&request_query);
+    // dbg!(&request_query);
 
     let listings = Listing::query(
         pool,

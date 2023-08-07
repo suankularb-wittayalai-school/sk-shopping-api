@@ -31,6 +31,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
 
     cfg.service(shops::shop_detail::shop_detail);
     cfg.service(shops::query_shops::query_shops);
+    cfg.service(shops::update_shop_by_id::update_shop_by_id);
 
     cfg.service(orders::order_detail::order_detail);
 
