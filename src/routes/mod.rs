@@ -25,6 +25,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(items::query_items::query_items);
 
     cfg.service(listings::listing_detail::listing_detail);
+    cfg.service(listings::query_listings::query_listings);
 
     cfg.service(collections::collection_detail::collection_detail);
 

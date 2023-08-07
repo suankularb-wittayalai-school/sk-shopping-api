@@ -1,13 +1,19 @@
 use async_recursion::async_recursion;
 use chrono::{DateTime, Utc};
-use mysk_lib::models::common::{requests::FetchLevel, string::MultiLangString};
+use mysk_lib::models::common::{
+    requests::{FetchLevel, FilterConfig, PaginationConfig, SortingConfig},
+    string::MultiLangString,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use uuid::Uuid;
 
+use self::request::{QueryableListing, SortableListing};
+
 use super::{collection::Collection, item::Item, shop::Shop};
 
 pub(crate) mod db;
+pub(crate) mod request;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IdOnlyListing {
@@ -321,6 +327,25 @@ impl Listing {
             result.push(Self::from_table(pool, listing, level, descendant_fetch_level).await?);
         }
 
+        Ok(result)
+    }
+
+    pub async fn query(
+        pool: &sqlx::PgPool,
+        filter: &Option<FilterConfig<QueryableListing>>,
+        sorting: &Option<SortingConfig<SortableListing>>,
+        pagination: &Option<PaginationConfig>,
+        level: Option<&FetchLevel>,
+        descendant_fetch_level: Option<&FetchLevel>,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        let listings = db::ListingTable::query(pool, filter, sorting, pagination).await?;
+
+        // parallel stream is not working due to lifetime issue
+        let mut result = vec![];
+        for listings in listings {
+            let data = Self::from_table(pool, listings, level, descendant_fetch_level).await?;
+            result.push(data);
+        }
         Ok(result)
     }
 }
