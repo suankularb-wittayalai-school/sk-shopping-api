@@ -1,14 +1,20 @@
-use mysk_lib::models::common::requests::FetchLevel;
+use mysk_lib::models::common::requests::{
+    FetchLevel, FilterConfig, PaginationConfig, SortingConfig,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::pool;
 use uuid::Uuid;
 
-use self::db::OrderItemTable;
+use self::{
+    db::OrderItemTable,
+    request::{QueryableOrder, SortableOrder},
+};
 
 use super::item::Item;
 
 pub(crate) mod db;
 pub(crate) mod fetch_levels;
+pub(crate) mod request;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct OrderItem {
@@ -108,6 +114,24 @@ impl Order {
         let order_db = db::OrderTable::get_by_id(pool, id).await?;
 
         Self::from_table(pool, order_db, fetch_level, descendant_fetch_level).await
+    }
+
+    pub async fn query(
+        pool: &sqlx::PgPool,
+        filter: &Option<FilterConfig<QueryableOrder>>,
+        sorting: &Option<SortingConfig<SortableOrder>>,
+        pagination: &Option<PaginationConfig>,
+        level: Option<&FetchLevel>,
+        descendant_fetch_level: Option<&FetchLevel>,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        let orders = db::OrderTable::query(pool, filter, sorting, pagination).await?;
+
+        let mut result = vec![];
+        for order in orders {
+            let data = Self::from_table(pool, order, level, descendant_fetch_level).await?;
+            result.push(data);
+        }
+        Ok(result)
     }
 }
 
