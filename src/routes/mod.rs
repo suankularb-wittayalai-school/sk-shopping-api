@@ -31,6 +31,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(collections::query_collections::query_collections);
     cfg.service(collections::create_collections::create_collections);
     cfg.service(collections::delete_collections::delete_collections);
+    cfg.service(collections::delete_collection::delete_collection);
 
     cfg.service(shops::shop_detail::shop_detail);
     cfg.service(shops::query_shops::query_shops);

@@ -54,11 +54,11 @@ pub async fn delete_collections(
     for collection_id in data {
         let res = sqlx::query(
             r#"
-            SELECT COUNT(id) FROM shop_managers WHERE user_id = $1 AND shop_id = $2
+            SELECT COUNT(id) FROM shop_managers INNER JOIN collections ON collections.shop_id = shop_managers.shop_id WHERE user_id = $1 AND collections.id = $2
             "#,
         )
         .bind(user_id)
-        .bind(data)
+        .bind(collection_id)
         .fetch_one(pool)
         .await;
 
