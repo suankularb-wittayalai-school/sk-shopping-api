@@ -48,7 +48,7 @@ impl ListingTable {
         ids: Vec<sqlx::types::Uuid>,
     ) -> Result<Vec<Self>, sqlx::Error> {
         let query = format!(
-            "{} WHERE id = ANY($1) GROUP BY listings.id",
+            "{} WHERE listings.id = ANY($1) GROUP BY listings.id",
             Self::get_default_query()
         );
 

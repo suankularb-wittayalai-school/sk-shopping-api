@@ -9,9 +9,9 @@ use uuid::Uuid;
 use crate::{
     models::{
         auth::user::User,
-        item::{
-            request::{QueryableItem, SortableItem},
-            Item,
+        listing::{
+            request::{QueryableListing, SortableListing},
+            Listing,
         },
     },
     AppState,
@@ -21,7 +21,7 @@ use crate::{
 pub async fn get_user_wishlists(
     user: User,
     data: web::Data<AppState>,
-    request_query: web::Query<RequestType<Item, QueryableItem, SortableItem>>,
+    request_query: web::Query<RequestType<Listing, QueryableListing, SortableListing>>,
 ) -> Result<impl Responder, actix_web::Error> {
     let pool = &data.db;
 
@@ -45,7 +45,7 @@ pub async fn get_user_wishlists(
     let wishlists = sqlx::query(
         r#"
         SELECT
-            item_id
+            listing_id
         FROM
             user_wishlists
         WHERE
@@ -76,10 +76,10 @@ pub async fn get_user_wishlists(
 
     let wishlists = wishlists
         .into_iter()
-        .map(|wishlist| wishlist.get::<Uuid, _>("item_id"))
+        .map(|wishlist| wishlist.get::<Uuid, _>("listing_id"))
         .collect();
 
-    let items = Item::get_by_ids(
+    let items = Listing::get_by_ids(
         pool,
         wishlists,
         Some(&fetch_level),

@@ -28,6 +28,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(listings::query_listings::query_listings);
     cfg.service(listings::delete_listings::delete_listings);
     cfg.service(listings::update_listing_by_id::update_listing_by_id);
+    cfg.service(listings::add_to_wishlist::add_to_wishlist);
 
     cfg.service(collections::collection_detail::collection_detail);
     cfg.service(collections::query_collections::query_collections);

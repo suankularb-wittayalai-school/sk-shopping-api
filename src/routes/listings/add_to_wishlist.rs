@@ -1,4 +1,4 @@
-use actix_web::{patch, web, HttpResponse, Responder};
+use actix_web::{post, web, HttpResponse, Responder};
 use mysk_lib::models::common::{
     requests::{FetchLevel, RequestType},
     response::{ErrorResponseType, ErrorType, MetadataType, PaginationType, ResponseType},
@@ -9,41 +9,23 @@ use uuid::Uuid;
 use crate::{
     models::{
         auth::user::User,
-        shop::{
-            request::{QueryableShop, SortableShop, UpdatableShop},
-            Shop,
+        listing::{
+            request::{QueryableListing, SortableListing},
+            Listing,
         },
     },
     AppState,
 };
 
-#[patch("/shops/{shop_id}")]
-pub async fn update_shop_by_id(
+#[post("/listings/{listing_id}/wish")]
+pub async fn add_to_wishlist(
     data: web::Data<AppState>,
-    shop_id: web::Path<Uuid>,
-    request: web::Json<RequestType<UpdatableShop, QueryableShop, SortableShop>>,
+    listing_id: web::Path<Uuid>,
+    request: web::Json<RequestType<Listing, QueryableListing, SortableListing>>,
     user: User,
 ) -> Result<impl Responder, actix_web::Error> {
     let pool = &data.db;
-    let shop_id = shop_id.into_inner();
-
-    let data = match &request.data {
-        Some(data) => data,
-        None => {
-            let response: ErrorResponseType = ErrorResponseType::new(
-                ErrorType {
-                    id: Uuid::new_v4().to_string(),
-                    code: 400,
-                    error_type: "bad_request".to_string(),
-                    detail: "request body is empty".to_string(),
-                    source: format!("/shops/{shop_id}"),
-                },
-                Some(MetadataType::new(None::<PaginationType>)),
-            );
-
-            return Ok(HttpResponse::BadRequest().json(response));
-        }
-    };
+    let listing_id = listing_id.into_inner();
 
     let user_id = match user {
         User::IdOnly(user) => user.id,
@@ -54,23 +36,26 @@ pub async fn update_shop_by_id(
 
     let res = sqlx::query(
         r#"
-        SELECT COUNT(id) FROM shop_managers WHERE user_id = $1 AND shop_id = $2
+        SELECT COUNT(id) FROM user_wishlists WHERE user_id = $1 AND listing_id = $2
         "#,
     )
     .bind(user_id)
-    .bind(shop_id)
+    .bind(listing_id)
     .fetch_one(pool)
     .await;
 
     if let Ok(res) = res {
-        if res.get::<Option<i64>, _>("count").unwrap_or(0) == 0 {
+        if res.get::<Option<i64>, _>("count").unwrap_or(0) == 1 {
             let response: ErrorResponseType = ErrorResponseType::new(
                 ErrorType {
                     id: Uuid::new_v4().to_string(),
                     code: 403,
                     error_type: "forbidden".to_string(),
-                    detail: "the user is not the shop manager".to_string(),
-                    source: format!("/shops/{shop_id}"),
+                    detail: format!(
+                        "user {} already added listing {} to wishlist",
+                        user_id, listing_id
+                    ),
+                    source: format!("/listings/{listing_id}/wish"),
                 },
                 None::<MetadataType>,
             );
@@ -79,9 +64,17 @@ pub async fn update_shop_by_id(
         }
     }
 
-    // dbg!(data);
+    // let res = data.commit_changes(pool, listing_id).await;
 
-    let res = data.commit_changes(pool, shop_id).await;
+    let res = sqlx::query(
+        r#"
+        INSERT INTO user_wishlists (user_id, listing_id) VALUES ($1, $2)
+        "#,
+    )
+    .bind(user_id)
+    .bind(listing_id)
+    .execute(pool)
+    .await;
 
     if res.is_err() {
         let response: ErrorResponseType = ErrorResponseType::new(
@@ -90,7 +83,7 @@ pub async fn update_shop_by_id(
                 code: 400,
                 error_type: "bad_request".to_string(),
                 detail: res.err().unwrap().to_string(),
-                source: format!("/shops/{shop_id}"),
+                source: format!("/listings/{listing_id}/wish"),
             },
             Some(MetadataType::new(None::<PaginationType>)),
         );
@@ -108,27 +101,28 @@ pub async fn update_shop_by_id(
         None => FetchLevel::IdOnly,
     };
 
-    let shop = Shop::get_by_id(
+    let listings = Listing::get_by_id(
         pool,
-        shop_id,
+        listing_id,
         Some(&fetch_level),
         Some(&descendant_fetch_level),
     )
     .await;
 
-    match shop {
-        Ok(shop) => Ok(HttpResponse::Ok().json(ResponseType::new(
-            shop,
-            Some(MetadataType::new(None::<PaginationType>)),
-        ))),
-        Err(e) => {
+    match listings {
+        Ok(listings) => {
+            let response: ResponseType<Listing> = ResponseType::new(listings, None::<MetadataType>);
+
+            Ok(HttpResponse::Ok().json(response))
+        }
+        Err(err) => {
             let response: ErrorResponseType = ErrorResponseType::new(
                 ErrorType {
                     id: Uuid::new_v4().to_string(),
                     code: 404,
-                    error_type: "entity_not_found".to_string(),
-                    detail: e.to_string(),
-                    source: "/shops/{shop_id}".to_string(),
+                    error_type: "not_found".to_string(),
+                    detail: err.to_string(),
+                    source: format!("/listings/{listing_id}/wish"),
                 },
                 None::<MetadataType>,
             );
