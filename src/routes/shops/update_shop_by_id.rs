@@ -10,7 +10,6 @@ use crate::{
     models::{
         auth::user::User,
         shop::{
-            self,
             request::{QueryableShop, SortableShop, UpdatableShop},
             Shop,
         },
