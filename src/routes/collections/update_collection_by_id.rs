@@ -1,9 +1,8 @@
-use actix_web::{patch, web, HttpRequest, HttpResponse, Responder};
+use actix_web::{patch, web, HttpResponse, Responder};
 use mysk_lib::models::common::{
     requests::{FetchLevel, RequestType},
     response::{ErrorResponseType, ErrorType, MetadataType, PaginationType, ResponseType},
 };
-use serde::Deserialize;
 use sqlx::Row;
 use uuid::Uuid;
 
@@ -11,7 +10,6 @@ use crate::{
     models::{
         auth::user::User,
         collection::{
-            db::CollectionTable,
             request::{QueryableCollection, SortableCollection, UpdatableCollection},
             Collection,
         },

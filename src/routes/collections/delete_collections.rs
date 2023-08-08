@@ -1,7 +1,7 @@
-use actix_web::{delete, web, HttpRequest, HttpResponse, Responder};
+use actix_web::{delete, web, HttpResponse, Responder};
 use mysk_lib::models::common::{
-    requests::{FetchLevel, RequestType},
-    response::{ErrorResponseType, ErrorType, MetadataType, PaginationType, ResponseType},
+    requests::RequestType,
+    response::{ErrorResponseType, ErrorType, MetadataType, PaginationType},
 };
 use sqlx::Row;
 use uuid::Uuid;
@@ -12,7 +12,6 @@ use crate::{
         collection::{
             db::CollectionTable,
             request::{QueryableCollection, SortableCollection},
-            Collection,
         },
     },
     AppState,

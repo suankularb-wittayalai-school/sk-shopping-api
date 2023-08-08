@@ -1,21 +1,12 @@
-use actix_web::{delete, web, HttpRequest, HttpResponse, Responder};
-use mysk_lib::models::common::{
-    requests::{FetchLevel, RequestType},
-    response::{ErrorResponseType, ErrorType, MetadataType, PaginationType, ResponseType},
+use actix_web::{delete, web, HttpResponse, Responder};
+use mysk_lib::models::common::response::{
+    ErrorResponseType, ErrorType, MetadataType, PaginationType,
 };
-use serde::Deserialize;
 use sqlx::Row;
 use uuid::Uuid;
 
 use crate::{
-    models::{
-        auth::user::User,
-        collection::{
-            db::CollectionTable,
-            request::{QueryableCollection, SortableCollection},
-            Collection,
-        },
-    },
+    models::{auth::user::User, collection::db::CollectionTable},
     AppState,
 };
 
