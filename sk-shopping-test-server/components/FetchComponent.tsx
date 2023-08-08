@@ -96,7 +96,7 @@ export default function FetchComponent({
             <MenuItem value="DELETE">DELETE</MenuItem>
           </Select>
 
-          {method !== "GET" && method !== "DELETE" && (
+          {method !== "GET" && (
             <TextField<string>
               appearance="outlined"
               label="Request Body"
@@ -107,7 +107,7 @@ export default function FetchComponent({
               className="col-span-4"
             />
           )}
-          {(method === "GET" || method === "DELETE") && (
+          {method === "GET" && (
             <TextField<string>
               appearance="outlined"
               label="Query String"
@@ -123,7 +123,7 @@ export default function FetchComponent({
           {/* {// a button to beautify the json} */}
           <Button
             onClick={() => {
-              if (method === "GET" || method === "DELETE") {
+              if (method === "GET") {
                 setQuery(JSON.stringify(JSON.parse(query), null, 2));
               }
               if (method !== "GET" && method !== "DELETE") {

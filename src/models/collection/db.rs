@@ -2,6 +2,7 @@ use chrono::{DateTime, Utc};
 use mysk_lib::models::common::requests::{FilterConfig, PaginationConfig, SortingConfig};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use uuid::Uuid;
 
 use super::request::{QueryableCollection, SortableCollection};
 
@@ -271,5 +272,23 @@ impl CollectionTable {
         }
 
         query_builder.fetch_all(pool).await
+    }
+
+    pub async fn delete(pool: &sqlx::PgPool, id: Uuid) -> Result<(), sqlx::Error> {
+        let query = format!("DELETE FROM collections WHERE id = $1 ");
+
+        match sqlx::query(&query).bind(id).execute(pool).await {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub async fn bulk_delete(pool: &sqlx::PgPool, ids: Vec<Uuid>) -> Result<(), sqlx::Error> {
+        let query = format!("DELETE FROM collections WHERE id = ANY($1) ");
+
+        match sqlx::query(&query).bind(ids).execute(pool).await {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
+        }
     }
 }
