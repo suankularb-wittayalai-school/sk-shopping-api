@@ -201,6 +201,27 @@ impl ListingTable {
                 params_count += 1;
             }
 
+            if let Some(category_ids) = &data.category_ids {
+                if query.contains("WHERE") {
+                    query.push_str(&format!(
+                        " AND listings.id = ANY(
+                            SELECT listing_id FROM listing_categories WHERE category_id = ANY(${})
+                        )",
+                        params_count + 1
+                    ));
+                } else {
+                    query.push_str(&format!(
+                        " WHERE listings.id = ANY(
+                            SELECT listing_id FROM listing_categories WHERE category_id = ANY(${})
+                        )",
+                        params_count + 1
+                    ));
+                }
+
+                uuid_array_params.push(category_ids);
+                params_count += 1;
+            }
+
             if let Some(is_hidden) = data.is_hidden {
                 if query.contains("WHERE") {
                     query.push_str(&format!(" AND is_hidden = ${}", params_count + 1));
