@@ -336,6 +336,12 @@ pub enum Item {
     Detailed(DetailedItem),
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CartItem {
+    pub item: Item,
+    pub amount: i64,
+}
+
 impl Serialize for Item {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
@@ -424,5 +430,109 @@ impl Item {
             result.push(data);
         }
         Ok(result)
+    }
+}
+
+impl CartItem {
+    pub async fn get_by_user_id(
+        pool: &sqlx::PgPool,
+        user_id: sqlx::types::Uuid,
+        level: Option<&FetchLevel>,
+        descendant_fetch_level: Option<&FetchLevel>,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        let res = sqlx::query(
+            r#"
+            SELECT item_id, amount FROM user_cart_items WHERE user_id = $1
+            "#,
+        )
+        .bind(user_id)
+        .fetch_all(pool)
+        .await?;
+
+        let mut items = vec![];
+
+        for row in res {
+            let item_id = row.get::<Uuid, _>("item_id");
+            let amount = row.get::<i64, _>("amount");
+
+            let item = Item::get_by_id(pool, item_id, level, descendant_fetch_level).await?;
+
+            items.push(CartItem { item, amount });
+        }
+
+        Ok(items)
+    }
+
+    pub async fn add_to_user_cart(
+        &self,
+        user_id: sqlx::types::Uuid,
+        pool: &sqlx::PgPool,
+    ) -> Result<(), sqlx::Error> {
+        let item_id = match &self.item {
+            Item::IdOnly(item) => item.id,
+            Item::Compact(item) => item.id,
+            Item::Default(item) => item.id,
+            Item::Detailed(item) => item.id,
+        };
+
+        // sqlx::query(
+        //     r#"
+        //     INSERT INTO user_cart_items (user_id, item_id, amount) VALUES ($1, $2, $3)
+        //     "#,
+        // )
+        // .bind(user_id)
+        // .bind(item_id)
+        // .bind(self.amount)
+        // .execute(pool)
+        // .await?;
+
+        // insert or update user_cart_items table with the given amount
+
+        let res = sqlx::query(
+            r#"
+            SELECT COUNT(id) FROM user_cart_items WHERE user_id = $1 AND item_id = $2
+            "#,
+        )
+        .bind(user_id)
+        .bind(item_id)
+        .fetch_one(pool)
+        .await?;
+
+        if res.get::<Option<i64>, _>("count").unwrap_or(0) == 0 {
+            sqlx::query(
+                r#"
+                INSERT INTO user_cart_items (user_id, item_id, amount) VALUES ($1, $2, $3)
+                "#,
+            )
+            .bind(user_id)
+            .bind(item_id)
+            .bind(self.amount)
+            .execute(pool)
+            .await?;
+        } else if self.amount == 0 {
+            sqlx::query(
+                r#"
+                    DELETE FROM user_cart_items WHERE user_id = $1 AND item_id = $2
+                    "#,
+            )
+            .bind(user_id)
+            .bind(item_id)
+            .execute(pool)
+            .await?;
+            return Ok(());
+        } else {
+            sqlx::query(
+                r#"
+            UPDATE user_cart_items SET amount = $1 WHERE user_id = $2 AND item_id = $3
+            "#,
+            )
+            .bind(self.amount)
+            .bind(user_id)
+            .bind(item_id)
+            .execute(pool)
+            .await?;
+        }
+
+        Ok(())
     }
 }
