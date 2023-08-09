@@ -1,6 +1,6 @@
 use actix_web::{delete, web, HttpResponse, Responder};
 use mysk_lib::models::common::response::{
-    ErrorResponseType, ErrorType, MetadataType, PaginationType,
+    ErrorResponseType, ErrorType, MetadataType, PaginationType, ResponseType,
 };
 use sqlx::Row;
 use uuid::Uuid;
@@ -59,7 +59,10 @@ pub async fn delete_collection(
     let res = CollectionTable::delete(pool, collection_id).await;
 
     match res {
-        Ok(_) => Ok(HttpResponse::NoContent().into()),
+        Ok(_) => Ok(HttpResponse::NoContent().json(ResponseType::new(
+            None::<bool>,
+            Some(MetadataType::new(None::<PaginationType>)),
+        ))),
         Err(err) => {
             let response: ErrorResponseType = ErrorResponseType::new(
                 ErrorType {
