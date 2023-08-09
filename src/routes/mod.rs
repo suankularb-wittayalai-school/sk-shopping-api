@@ -29,6 +29,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(items::add_to_cart::add_to_cart);
     cfg.service(items::create_items::create_items);
     cfg.service(items::delete_items::delete_items);
+    cfg.service(items::update_item_by_id::update_item_by_id);
 
     cfg.service(listings::listing_detail::listing_detail);
     cfg.service(listings::query_listings::query_listings);
