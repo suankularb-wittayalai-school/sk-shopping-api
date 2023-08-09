@@ -327,20 +327,68 @@ impl ItemTable {
     }
 
     pub async fn delete(pool: &sqlx::PgPool, id: Uuid) -> Result<(), sqlx::Error> {
+        let mut transaction = pool.begin().await?;
+
         let query = format!("DELETE FROM items WHERE id = $1 ");
 
-        match sqlx::query(&query).bind(id).execute(pool).await {
+        match sqlx::query(&query)
+            .bind(id)
+            .execute(transaction.as_mut())
+            .await
+        {
             Ok(_) => Ok(()),
             Err(e) => Err(e),
-        }
+        };
+
+        // also delete listing if it has no items
+        let query = format!(
+            "DELETE FROM listings WHERE id = $1 AND id NOT IN (SELECT listing_id FROM items)"
+        );
+
+        match sqlx::query(&query)
+            .bind(id)
+            .execute(transaction.as_mut())
+            .await
+        {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
+        };
+
+        transaction.commit().await?;
+
+        Ok(())
     }
 
     pub async fn bulk_delete(pool: &sqlx::PgPool, ids: Vec<Uuid>) -> Result<(), sqlx::Error> {
-        let query = format!("DELETE FROM items WHERE id = ANY($1) ");
+        let mut transaction = pool.begin().await?;
 
-        match sqlx::query(&query).bind(ids).execute(pool).await {
+        let query = format!("DELETE FROM items WHERE id = ANY($1)");
+
+        match sqlx::query(&query)
+            .bind(&ids)
+            .execute(transaction.as_mut())
+            .await
+        {
             Ok(_) => Ok(()),
             Err(e) => Err(e),
-        }
+        };
+
+        // also delete listing if it has no items
+        let query = format!(
+            "DELETE FROM listings WHERE id = ANY($1) AND id NOT IN (SELECT listing_id FROM items)"
+        );
+
+        match sqlx::query(&query)
+            .bind(&ids)
+            .execute(transaction.as_mut())
+            .await
+        {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
+        };
+
+        transaction.commit().await?;
+
+        Ok(())
     }
 }

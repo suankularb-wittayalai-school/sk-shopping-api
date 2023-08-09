@@ -48,6 +48,8 @@ pub struct CreatableItem {
 
 impl CreatableItem {
     pub async fn insert(&self, pool: &sqlx::PgPool) -> Result<Uuid, sqlx::Error> {
+        let mut transaction = pool.begin().await?;
+
         // check listing id
         let listing_id = match self.listing_id {
             Some(listing_id) => listing_id,
@@ -74,7 +76,7 @@ impl CreatableItem {
                 .bind(&self.description)
                 .bind(&self.name)
                 .bind(&thumbnail_url)
-                .fetch_one(pool)
+                .fetch_one(transaction.as_mut())
                 .await?;
 
                 listing_id.get("id")
@@ -113,7 +115,7 @@ impl CreatableItem {
                     )
                     .bind(&item_id)
                     .bind(&image_url)
-                    .execute(pool)
+                    .execute(transaction.as_mut())
                     .await?;
                 }
             }
@@ -131,7 +133,7 @@ impl CreatableItem {
                 )
                 .bind(&item_id)
                 .bind(&initial_stock)
-                .execute(pool)
+                .execute(transaction.as_mut())
                 .await?;
             }
             None => {}
@@ -149,12 +151,14 @@ impl CreatableItem {
                     )
                     .bind(&item_id)
                     .bind(&color)
-                    .execute(pool)
+                    .execute(transaction.as_mut())
                     .await?;
                 }
             }
             None => {}
         };
+
+        transaction.commit().await?;
 
         Ok(item_id)
     }
