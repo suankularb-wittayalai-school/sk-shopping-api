@@ -1,3 +1,4 @@
+pub(crate) mod address;
 pub(crate) mod auth;
 pub(crate) mod category;
 pub(crate) mod collection;

@@ -53,7 +53,7 @@ async fn main() -> std::io::Result<()> {
         let cors = Cors::default()
             .allowed_origin("http://localhost:3000")
             .allowed_origin("http://127.0.0.1:3000")
-            .allowed_origin("http://http://[::1]:3000")
+            .allowed_origin("http://[::1]:3000")
             .allowed_origin("http://localhost:8000")
             .allowed_origin("http://localhost")
             .allowed_origin("https://mysk.school")

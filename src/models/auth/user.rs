@@ -5,12 +5,15 @@ use chrono::{DateTime, Utc};
 use futures::Future as FutureTrait;
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use mysk_lib::models::common::requests::FetchLevel;
-use mysk_lib::models::common::response::{ErrorResponseType, ErrorType};
+use mysk_lib::models::common::response::{
+    ErrorResponseType, ErrorType, MetadataType, PaginationType,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Error, FromRow, PgPool};
 
 use std::pin::Pin;
 
+use crate::models::address::Address;
 use crate::models::auth::oauth::TokenClaims;
 use crate::AppState;
 
@@ -121,12 +124,12 @@ pub struct DetailedUser {
     pub first_name: Option<String>,
     pub last_name: Option<String>,
     pub created_at: Option<DateTime<Utc>>,
-    // pub addresses: Vec<Address>
+    pub addresses: Vec<Address>,
 }
 
 impl DetailedUser {
-    pub async fn from_table(user: UserTable) -> Self {
-        Self {
+    pub async fn from_table(pool: &PgPool, user: UserTable) -> Result<Self, sqlx::Error> {
+        Ok(Self {
             id: user.id,
             username: user.username,
             email: user.email,
@@ -134,7 +137,8 @@ impl DetailedUser {
             first_name: user.first_name,
             last_name: user.last_name,
             created_at: user.created_at,
-        }
+            addresses: Address::get_by_user_id(pool, user.id).await?,
+        })
     }
 }
 
@@ -147,15 +151,21 @@ pub enum User {
 }
 
 impl User {
-    pub async fn from_table(user: UserTable, fetch_level: Option<&FetchLevel>) -> Self {
+    pub async fn from_table(
+        pool: &PgPool,
+        user: UserTable,
+        fetch_level: Option<&FetchLevel>,
+    ) -> Result<Self, sqlx::Error> {
         match fetch_level {
             Some(level) => match level {
-                FetchLevel::IdOnly => Self::IdOnly(IdOnlyUser::from_table(user)),
-                FetchLevel::Compact => Self::Compact(CompactUser::from_table(user)),
-                FetchLevel::Default => Self::Default(DefaultUser::from_table(user)),
-                FetchLevel::Detailed => Self::Detailed(DetailedUser::from_table(user).await),
+                FetchLevel::IdOnly => Ok(Self::IdOnly(IdOnlyUser::from_table(user))),
+                FetchLevel::Compact => Ok(Self::Compact(CompactUser::from_table(user))),
+                FetchLevel::Default => Ok(Self::Default(DefaultUser::from_table(user))),
+                FetchLevel::Detailed => {
+                    Ok(Self::Detailed(DetailedUser::from_table(pool, user).await?))
+                }
             },
-            None => Self::Default(DefaultUser::from_table(user)),
+            None => Ok(Self::Default(DefaultUser::from_table(user))),
         }
     }
 
@@ -166,15 +176,7 @@ impl User {
     ) -> Result<Self, Error> {
         let user = UserTable::from_id(pool, id).await?;
 
-        match fetch_level {
-            Some(level) => match level {
-                FetchLevel::IdOnly => Ok(Self::IdOnly(IdOnlyUser::from_table(user))),
-                FetchLevel::Compact => Ok(Self::Compact(CompactUser::from_table(user))),
-                FetchLevel::Default => Ok(Self::Default(DefaultUser::from_table(user))),
-                FetchLevel::Detailed => Ok(Self::Detailed(DetailedUser::from_table(user).await)),
-            },
-            None => Ok(Self::Default(DefaultUser::from_table(user))),
-        }
+        Ok(Self::from_table(pool, user, fetch_level).await?)
     }
 }
 
@@ -313,7 +315,7 @@ impl FromRequest for User {
                         error_type: "entity_not_found".to_string(),
                         source: "".to_string(),
                     },
-                    None,
+                    Some(MetadataType::new(None::<PaginationType>)),
                 ))),
             }
         })
