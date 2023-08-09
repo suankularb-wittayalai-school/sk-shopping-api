@@ -22,6 +22,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(auth::user_wishlists::get_user_wishlists);
     cfg.service(auth::create_user_addresses::create_user_addresses);
     cfg.service(auth::delete_user_addresses::delete_user_addresses);
+    cfg.service(auth::get_user_cart_items::get_user_cart_items);
 
     cfg.service(items::item_detail::item_detail);
     cfg.service(items::query_items::query_items);
