@@ -135,6 +135,7 @@ pub struct OrderTable {
     pub shipment_status: OrderStatus,
     pub delivery_type: DeliveryType,
     pub receiver_name: String,
+    pub total_price: i64,
 }
 
 impl OrderTable {

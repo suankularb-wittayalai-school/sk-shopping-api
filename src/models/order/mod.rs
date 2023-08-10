@@ -14,6 +14,7 @@ use super::item::Item;
 
 pub(crate) mod db;
 pub(crate) mod fetch_levels;
+pub(crate) mod omise;
 pub(crate) mod request;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -77,9 +78,7 @@ impl Order {
         descendant_fetch_level: Option<&FetchLevel>,
     ) -> Result<Self, sqlx::Error> {
         match fetch_level {
-            Some(FetchLevel::Compact) => Ok(Self::Compact(
-                fetch_levels::compact::CompactOrder::from_table(pool, order).await?,
-            )),
+            Some(FetchLevel::Compact) => Ok(Self::Compact(order.into())),
             Some(FetchLevel::Default) => Ok(Self::Default(
                 fetch_levels::default::DefaultOrder::from_table(
                     pool,

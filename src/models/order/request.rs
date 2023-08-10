@@ -1,4 +1,7 @@
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+
+use crate::models::address::Address;
 
 use super::db::{DeliveryType, OrderStatus};
 
@@ -29,4 +32,29 @@ pub enum SortableOrder {
     BuyerId,
     IsPaid,
     ShippingStatus, // TODO sort by price once the price is added to the order query
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ItemAmount {
+    pub item_id: sqlx::types::Uuid,
+    pub amount: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreatableOrder {
+    items: Vec<ItemAmount>,
+    delivery_type: DeliveryType,
+    address: Option<Address>,
+    receiver_name: String,
+}
+
+impl CreatableOrder {
+    pub async fn insert(
+        &self,
+        pool: &sqlx::PgPool,
+        omise_secret_key: &str,
+        user_id: Option<Uuid>,
+    ) -> Result<Uuid, sqlx::Error> {
+        todo!()
+    }
 }

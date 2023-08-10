@@ -40,7 +40,7 @@ impl DefaultOrder {
     ) -> Result<Self, sqlx::Error> {
         let items_db = sqlx::query(
             r#"
-            SELECT id, amount, item_id
+            SELECT id, item_id
             FROM order_items
             WHERE order_id = $1
             "#,
@@ -53,57 +53,18 @@ impl DefaultOrder {
         //     .into_iter()
         //     .map(|row| row.get::<sqlx::types::Uuid, _>("item_id"))
         // .collect::<Vec<sqlx::types::Uuid>>();
-        let (order_items_id, items_id, item_amount): (
-            Vec<sqlx::types::Uuid>,
-            Vec<sqlx::types::Uuid>,
-            Vec<i64>,
-        ) = items_db
+        let (order_items_id, items_id): (Vec<sqlx::types::Uuid>, Vec<sqlx::types::Uuid>) = items_db
             .into_iter()
             .map(|row| {
                 (
                     row.get::<sqlx::types::Uuid, _>("id"),
                     row.get::<sqlx::types::Uuid, _>("item_id"),
-                    row.get::<i64, _>("amount"),
                 )
             })
-            .unzip_n_vec();
+            .unzip();
 
         let items =
             OrderItem::get_by_ids(pool, order_items_id.clone(), descendant_fetch_level).await?;
-
-        dbg!(items_id.clone());
-
-        let price_per_item = sqlx::query(
-            r#"
-            SELECT id, price, discounted_price
-            FROM items
-            WHERE id = ANY($1)
-            "#,
-        )
-        .bind(&items_id)
-        .fetch_all(pool)
-        .await?;
-
-        let total_price = price_per_item
-            .into_iter()
-            .map(|row| {
-                let item_id = row.get::<sqlx::types::Uuid, _>("id");
-                let price = row.get::<i64, _>("price");
-                let discounted_price = row.get::<Option<i64>, _>("discounted_price");
-                let amount_index = items_id
-                    .iter()
-                    .position(|item_id_| item_id_ == &item_id)
-                    .unwrap();
-
-                let amount = item_amount[amount_index];
-                // if discounted_price == 0 {
-                //     price * *amount as i64
-                // } else {
-                //     discounted_price * *amount as i64
-                // }
-                discounted_price.unwrap_or(price) * amount
-            })
-            .sum::<i64>();
 
         let pickup_location = sqlx::query(
             r#"
@@ -140,7 +101,6 @@ impl DefaultOrder {
             id: order.id,
             is_paid: order.is_paid,
             shipment_status: order.shipment_status,
-            total_price,
             delivery_type: order.delivery_type,
             items,
             street_address_line_1: order.street_address_line_1,
@@ -151,6 +111,7 @@ impl DefaultOrder {
             pickup_location,
             buyer: user,
             receiver_name: order.receiver_name,
+            total_price: order.total_price,
         })
     }
 }

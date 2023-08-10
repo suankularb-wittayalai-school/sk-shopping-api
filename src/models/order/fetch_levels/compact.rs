@@ -1,8 +1,6 @@
-use mysk_lib::models::common::requests::FetchLevel;
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Row};
 
-use crate::models::order::db::{DeliveryType, OrderStatus};
+use crate::models::order::db::{DeliveryType, OrderStatus, OrderTable};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompactOrder {
@@ -14,74 +12,15 @@ pub struct CompactOrder {
     pub delivery_type: DeliveryType,
 }
 
-impl CompactOrder {
-    pub async fn from_table(
-        pool: &PgPool,
-        order: super::super::db::OrderTable,
-    ) -> Result<Self, sqlx::Error> {
-        let items_db = sqlx::query(
-            r#"
-            SELECT item_id, amount
-            FROM order_items
-            WHERE order_id = $1
-            "#,
-        )
-        .bind(order.id)
-        .fetch_all(pool)
-        .await?;
-
-        // let items_id = items_db
-        //     .into_iter()
-        //     .map(|row| row.get::<sqlx::types::Uuid, _>("item_id"))
-        // .collect::<Vec<sqlx::types::Uuid>>();
-        let (items_id, item_amount): (Vec<sqlx::types::Uuid>, Vec<i64>) = items_db
-            .into_iter()
-            .map(|row| {
-                (
-                    row.get::<sqlx::types::Uuid, _>("item_id"),
-                    row.get::<i64, _>("amount"),
-                )
-            })
-            .unzip();
-
-        let price_per_item = sqlx::query(
-            r#"
-            SELECT id, price, discounted_price
-            FROM items
-            WHERE id = ANY($1)
-            "#,
-        )
-        .bind(&items_id)
-        .fetch_all(pool)
-        .await?;
-
-        let total_price = price_per_item
-            .into_iter()
-            .map(|row| {
-                let item_id = row.get::<sqlx::types::Uuid, _>("id");
-                let price = row.get::<i64, _>("price");
-                let discounted_price = row.get::<Option<i64>, _>("discounted_price");
-                let amount_index = items_id
-                    .iter()
-                    .position(|item_id_| item_id_ == &item_id)
-                    .unwrap();
-
-                let amount = item_amount[amount_index];
-                // if discounted_price == 0 {
-                //     price * *amount as i64
-                // } else {
-                //     discounted_price * *amount as i64
-                // }
-                discounted_price.unwrap_or(price) * amount
-            })
-            .sum::<i64>();
-        Ok(Self {
+impl From<OrderTable> for CompactOrder {
+    fn from(order: OrderTable) -> Self {
+        Self {
             id: order.id,
             receiver_name: order.receiver_name,
             is_paid: order.is_paid,
             shipment_status: order.shipment_status,
-            total_price,
+            total_price: order.total_price,
             delivery_type: order.delivery_type,
-        })
+        }
     }
 }
