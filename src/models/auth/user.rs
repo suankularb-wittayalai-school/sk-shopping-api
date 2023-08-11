@@ -321,3 +321,71 @@ impl FromRequest for User {
         })
     }
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct OptionalUser(pub Option<User>);
+
+impl FromRequest for OptionalUser {
+    type Error = ActixWebError;
+    type Future = Pin<Box<dyn FutureTrait<Output = Result<Self, Self::Error>>>>;
+
+    // all both user being logged in and not logged in
+    fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
+        let app_state = match req.app_data::<web::Data<AppState>>() {
+            Some(state) => state,
+            None => {
+                return Box::pin(async {
+                    Err(ErrorNotFound(ErrorResponseType::new(
+                        ErrorType {
+                            id: Uuid::new_v4().to_string(),
+                            code: 500,
+                            detail: "AppState not found".to_owned(),
+                            error_type: "internal_server_error".to_owned(),
+                            source: "".to_owned(),
+                        },
+                        None,
+                    )))
+                })
+            }
+        };
+
+        let pool = app_state.db.clone();
+        let jwt_secret = app_state.env.jwt_secret.clone();
+
+        let auth_header = req.headers().get(http::header::AUTHORIZATION);
+
+        let token = match auth_header {
+            Some(token) => match token.to_str() {
+                Ok(token) => token,
+                // return none if the token is not a string as ResponseType
+                Err(_) => return Box::pin(async { Ok(OptionalUser(None)) }),
+            },
+            None => return Box::pin(async { Ok(OptionalUser(None)) }),
+        };
+
+        let token = token.trim_start_matches("Bearer ");
+
+        let claims = match decode::<TokenClaims>(
+            token,
+            &DecodingKey::from_secret(jwt_secret.as_bytes()),
+            &Validation::default(),
+        ) {
+            Ok(claims) => claims,
+            Err(_) => return Box::pin(async { Ok(OptionalUser(None)) }),
+        };
+
+        let user_id = match Uuid::parse_str(&claims.claims.sub) {
+            Ok(user_id) => user_id,
+            Err(_) => return Box::pin(async { Ok(OptionalUser(None)) }),
+        };
+
+        Box::pin(async move {
+            let user = User::from_id(user_id, &pool, None).await;
+
+            match user {
+                Ok(user) => Ok(OptionalUser(Some(user))),
+                Err(_) => Ok(OptionalUser(None)),
+            }
+        })
+    }
+}

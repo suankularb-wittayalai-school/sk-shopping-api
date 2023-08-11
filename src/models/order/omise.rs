@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
+use super::db::PaymentMethod;
+
 // {
 //     "object": "charge",
 //     "id": "chrg_test_5sqhgjedme2u2atfhuc",
@@ -175,7 +177,7 @@ impl OmiseCharge {
     pub async fn new(
         amount: i64,
         // currency: &str,
-        source_type: &str,
+        source_type: PaymentMethod,
         omise_secret_key: &str,
     ) -> Result<Self, Box<dyn std::error::Error>> {
         let client = reqwest::Client::new();

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::models::order::db::{DeliveryType, OrderStatus, OrderTable};
+use crate::models::order::db::{DeliveryType, OrderStatus, OrderTable, PaymentMethod};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompactOrder {
@@ -10,6 +10,7 @@ pub struct CompactOrder {
     pub shipment_status: OrderStatus,
     pub total_price: i64,
     pub delivery_type: DeliveryType,
+    pub payment_method: PaymentMethod,
 }
 
 impl From<OrderTable> for CompactOrder {
@@ -21,6 +22,7 @@ impl From<OrderTable> for CompactOrder {
             shipment_status: order.shipment_status,
             total_price: order.total_price,
             delivery_type: order.delivery_type,
+            payment_method: order.payment_method,
         }
     }
 }

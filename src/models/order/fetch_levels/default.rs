@@ -1,5 +1,3 @@
-use unzip_n::unzip_n;
-
 use mysk_lib::models::common::requests::FetchLevel;
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
@@ -7,12 +5,10 @@ use sqlx::{PgPool, Row};
 use crate::models::{
     auth::user::User,
     order::{
-        db::{DeliveryType, OrderStatus},
+        db::{DeliveryType, OrderStatus, PaymentMethod},
         OrderItem,
     },
 };
-
-unzip_n!(pub 3);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DefaultOrder {
@@ -30,6 +26,7 @@ pub struct DefaultOrder {
     pub pickup_location: Option<Vec<String>>,
     pub buyer: Option<User>,
     pub receiver_name: String,
+    pub payment_method: PaymentMethod,
 }
 
 impl DefaultOrder {
@@ -112,6 +109,7 @@ impl DefaultOrder {
             buyer: user,
             receiver_name: order.receiver_name,
             total_price: order.total_price,
+            payment_method: order.payment_method,
         })
     }
 }

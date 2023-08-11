@@ -115,6 +115,23 @@ impl Order {
         Self::from_table(pool, order_db, fetch_level, descendant_fetch_level).await
     }
 
+    pub async fn get_by_ids(
+        pool: &pool::Pool<sqlx::Postgres>,
+        ids: Vec<Uuid>,
+        fetch_level: Option<&FetchLevel>,
+        descendant_fetch_level: Option<&FetchLevel>,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        let orders_db = db::OrderTable::get_by_ids(pool, ids).await?;
+
+        let mut orders = Vec::new();
+
+        for order in orders_db {
+            orders.push(Self::from_table(pool, order, fetch_level, descendant_fetch_level).await?);
+        }
+
+        Ok(orders)
+    }
+
     pub async fn query(
         pool: &sqlx::PgPool,
         filter: &Option<FilterConfig<QueryableOrder>>,

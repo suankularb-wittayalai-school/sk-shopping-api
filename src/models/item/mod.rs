@@ -42,7 +42,7 @@ pub struct DefaultItem {
     pub preorder_start: Option<DateTime<Utc>>,
     pub preorder_end: Option<DateTime<Utc>>,
     pub colors: Vec<String>,
-    pub images_url: Vec<String>,
+    pub image_urls: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -57,7 +57,7 @@ pub struct DetailedItem {
     pub preorder_start: Option<DateTime<Utc>>,
     pub preorder_end: Option<DateTime<Utc>>,
     pub colors: Vec<String>,
-    pub images_url: Vec<String>,
+    pub image_urls: Vec<String>,
     pub shop: Shop,
     pub listing: Listing,
     pub collections: Vec<Collection>,
@@ -198,7 +198,7 @@ impl DefaultItem {
             lifetime_stock,
             amount_sold,
             colors,
-            images_url,
+            image_urls: images_url,
         })
     }
 }
@@ -308,7 +308,7 @@ impl DetailedItem {
             preorder_start: item.preorder_start,
             preorder_end: item.preorder_end,
             colors,
-            images_url,
+            image_urls: images_url,
             listing: Listing::get_by_id(
                 pool,
                 item.listing_id,

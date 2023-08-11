@@ -13,6 +13,7 @@ use super::request::{QueryableOrder, SortableOrder};
 pub enum OrderStatus {
     NotShippedOut,
     Pending,
+    Canceled,
     Delivered,
 }
 
@@ -31,6 +32,7 @@ impl Display for OrderStatus {
         let s = match self {
             Self::NotShippedOut => "not_shipped_out",
             Self::Pending => "pending",
+            Self::Canceled => "canceled",
             Self::Delivered => "delivered",
         };
         write!(f, "{}", s)
@@ -84,7 +86,7 @@ pub enum DeliveryType {
 impl Display for DeliveryType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
-            Self::SchoolPickup => "school_pickup",
+            Self::SchoolPickup => "pick_up",
             Self::Delivery => "delivery",
         };
         write!(f, "{}", s)
@@ -121,6 +123,56 @@ impl sqlx::Decode<'_, sqlx::Postgres> for DeliveryType {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[serde(rename_all = "snake_case")]
+pub enum PaymentMethod {
+    Cod,
+    Promptpay,
+    // Kplus,
+}
+
+impl Display for PaymentMethod {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Self::Cod => "cod",
+            Self::Promptpay => "promptpay",
+            // Self::Kplus => "mobile_banking_kbank",
+        };
+        write!(f, "{}", s)
+    }
+}
+
+impl Type<sqlx::Postgres> for PaymentMethod {
+    fn type_info() -> sqlx::postgres::PgTypeInfo {
+        // <String as Type>::type_info()
+        sqlx::postgres::PgTypeInfo::with_name("payment_method")
+    }
+}
+
+impl sqlx::Encode<'_, sqlx::Postgres> for PaymentMethod {
+    fn encode_by_ref(
+        &self,
+        buf: &mut <sqlx::Postgres as sqlx::database::HasArguments<'_>>::ArgumentBuffer,
+    ) -> sqlx::encode::IsNull {
+        let s: String = self.to_string();
+        <String as sqlx::Encode<sqlx::Postgres>>::encode(s, buf)
+    }
+}
+
+impl sqlx::Decode<'_, sqlx::Postgres> for PaymentMethod {
+    fn decode(
+        value: <sqlx::Postgres as sqlx::database::HasValueRef<'_>>::ValueRef,
+    ) -> Result<Self, Box<dyn std::error::Error + 'static + Send + Sync>> {
+        let s: String = <String as sqlx::Decode<sqlx::Postgres>>::decode(value)?;
+        match s.as_str() {
+            "cod" => Ok(Self::Cod),
+            "promptpay" => Ok(Self::Promptpay),
+            // "kplus" => Ok(Self::Kplus),
+            _ => Err("invalid payment method".into()),
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct OrderTable {
     pub id: Uuid,
@@ -136,6 +188,7 @@ pub struct OrderTable {
     pub delivery_type: DeliveryType,
     pub receiver_name: String,
     pub total_price: i64,
+    pub payment_method: PaymentMethod,
 }
 
 impl OrderTable {
@@ -151,6 +204,23 @@ impl OrderTable {
         .await?;
         Ok(result)
     }
+
+    pub async fn get_by_ids(
+        pool: &sqlx::PgPool,
+        ids: Vec<sqlx::types::Uuid>,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        let result = sqlx::query_as::<_, Self>(
+            r#"
+            SELECT * FROM orders
+            WHERE id = ANY($1)
+            "#,
+        )
+        .bind(ids)
+        .fetch_all(pool)
+        .await?;
+        Ok(result)
+    }
+
     fn get_default_query() -> String {
         "SELECT * FROM orders".to_string()
     }
