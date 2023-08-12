@@ -71,21 +71,6 @@ pub async fn create_orders(
 
     let order_ids: Result<Vec<Uuid>, _> = order_ids.into_iter().collect();
 
-    // if collection_ids.is_err() {
-    //     let response: ErrorResponseType = ErrorResponseType::new(
-    //         ErrorType {
-    //             id: Uuid::new_v4().to_string(),
-    //             code: 400,
-    //             error_type: "bad_request".to_string(),
-    //             detail: collection_ids.err().unwrap().to_string(),
-    //             source: format!("/collections"),
-    //         },
-    //         Some(MetadataType::new(None::<PaginationType>)),
-    //     );
-
-    //     return Ok(HttpResponse::BadRequest().json(response));
-    // };
-
     let order_ids = match order_ids {
         Ok(order_ids) => order_ids,
         Err(err) => {

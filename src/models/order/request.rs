@@ -23,6 +23,7 @@ pub struct QueryableOrder {
     pub district: Option<String>,
     pub zip_code: Option<i64>,
     pub is_paid: Option<bool>,
+    pub is_verified: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -32,6 +33,7 @@ pub enum SortableOrder {
     CreatedAt,
     BuyerId,
     IsPaid,
+    IsVerified,
     ShippingStatus, // TODO sort by price once the price is added to the order query
 }
 
@@ -87,6 +89,8 @@ impl CreatableOrder {
         if shop_ids.len() != 1 {
             return Err(sqlx::Error::RowNotFound);
         }
+
+        let shop_id = shop_ids[0];
 
         let curr_stock = sqlx::query(
             "SELECT
@@ -163,8 +167,8 @@ impl CreatableOrder {
         // create order
         let order_id = sqlx::query(
             r#"
-            INSERT INTO orders (buyer_id, street_address_line_1, street_address_line_2, province, district, zip_code, delivery_type, receiver_name, payment_method, total_price, payment_slip_url, contact_email, contact_phone_number)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            INSERT INTO orders (buyer_id, street_address_line_1, street_address_line_2, province, district, zip_code, delivery_type, receiver_name, payment_method, total_price, payment_slip_url, contact_email, contact_phone_number, shop_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             RETURNING id
             "#,
         )
@@ -181,6 +185,7 @@ impl CreatableOrder {
         .bind(self.payment_slip_url.clone())
         .bind(self.contact_email.clone())
         .bind(self.contact_phone_number.clone())
+        .bind(shop_id)
         .fetch_one(transaction.as_mut())
         .await?
         .get::<sqlx::types::Uuid, _>("id");
@@ -203,5 +208,99 @@ impl CreatableOrder {
         transaction.commit().await?;
 
         Ok(order_id)
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdatableOrder {
+    pub receiver_name: Option<String>,
+    pub payment_slip_url: Option<String>,
+    pub contact_email: Option<String>,
+    pub contact_phone_number: Option<String>,
+    pub is_paid: Option<bool>,
+    pub is_verified: Option<bool>,
+    pub shipment_status: Option<OrderStatus>,
+}
+
+impl UpdatableOrder {
+    pub async fn commit_changes(
+        &self,
+        pool: &sqlx::PgPool,
+        order_id: sqlx::types::Uuid,
+    ) -> Result<(), sqlx::Error> {
+        let mut query = String::from("UPDATE orders SET ");
+        let mut param_count = 1;
+
+        let mut param_segments = Vec::new();
+        let mut string_params = Vec::new();
+        let mut bool_params = Vec::new();
+        let mut order_status_params = Vec::new();
+
+        if let Some(receiver_name) = &self.receiver_name {
+            param_segments.push(format!("receiver_name = ${}", param_count));
+            string_params.push(receiver_name);
+            param_count += 1;
+        }
+
+        if let Some(payment_slip_url) = &self.payment_slip_url {
+            param_segments.push(format!("payment_slip_url = ${}", param_count));
+            string_params.push(payment_slip_url);
+            param_count += 1;
+        }
+
+        if let Some(contact_email) = &self.contact_email {
+            param_segments.push(format!("contact_email = ${}", param_count));
+            string_params.push(contact_email);
+            param_count += 1;
+        }
+
+        if let Some(contact_phone_number) = &self.contact_phone_number {
+            param_segments.push(format!("contact_phone_number = ${}", param_count));
+            string_params.push(contact_phone_number);
+            param_count += 1;
+        }
+
+        if let Some(is_paid) = &self.is_paid {
+            param_segments.push(format!("is_paid = ${}", param_count));
+            bool_params.push(is_paid);
+            param_count += 1;
+        }
+
+        if let Some(is_verified) = &self.is_verified {
+            param_segments.push(format!("is_verified = ${}", param_count));
+            bool_params.push(is_verified);
+            param_count += 1;
+        }
+
+        if let Some(shipment_status) = &self.shipment_status {
+            param_segments.push(format!("shipment_status = ${}", param_count));
+            order_status_params.push(shipment_status);
+            param_count += 1;
+        }
+
+        query.push_str(&param_segments.join(", "));
+
+        query.push_str(" WHERE id = $");
+        query.push_str(&param_count.to_string());
+
+        let mut query_builder = sqlx::query(&query);
+
+        for param in string_params {
+            query_builder = query_builder.bind(param);
+        }
+
+        for param in bool_params {
+            query_builder = query_builder.bind(param);
+        }
+
+        for param in order_status_params {
+            query_builder = query_builder.bind(param);
+        }
+
+        query_builder = query_builder.bind(order_id);
+
+        query_builder.execute(pool).await?;
+
+        Ok(())
     }
 }

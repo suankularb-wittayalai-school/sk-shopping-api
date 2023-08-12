@@ -14,6 +14,7 @@ use crate::models::{
 pub struct DefaultOrder {
     pub id: sqlx::types::Uuid,
     pub is_paid: bool,
+    pub is_verified: bool,
     pub shipment_status: OrderStatus,
     pub total_price: i64,
     pub delivery_type: DeliveryType,
@@ -134,6 +135,7 @@ impl DefaultOrder {
         Ok(Self {
             id: order.id,
             is_paid: order.is_paid,
+            is_verified: order.is_verified,
             shipment_status: order.shipment_status,
             delivery_type: order.delivery_type,
             items,

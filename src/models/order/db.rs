@@ -180,6 +180,7 @@ pub struct OrderTable {
     pub created_at: Option<DateTime<Utc>>,
     pub buyer_id: Option<sqlx::types::Uuid>,
     pub is_paid: bool,
+    pub is_verified: bool,
     pub street_address_line_1: Option<String>,
     pub street_address_line_2: Option<String>,
     pub zip_code: Option<String>,
@@ -456,6 +457,17 @@ impl OrderTable {
                 bool_params.push(is_paid);
                 params_count += 1;
             }
+
+            if let Some(is_verified) = data.is_verified {
+                if query.contains("WHERE") {
+                    query.push_str(&format!(" AND is_verified = ${}", params_count + 1));
+                } else {
+                    query.push_str(&format!(" WHERE is_verified = ${}", params_count + 1));
+                }
+
+                bool_params.push(is_verified);
+                params_count += 1;
+            }
         }
 
         (
@@ -497,6 +509,7 @@ impl OrderTable {
                     SortableOrder::CreatedAt => query.push_str("created_at"),
                     SortableOrder::BuyerId => query.push_str("buyer_id"),
                     SortableOrder::IsPaid => query.push_str("is_paid"),
+                    SortableOrder::IsVerified => query.push_str("is_verified"),
                     SortableOrder::ShippingStatus => query.push_str("shipping_status"),
                 }
 
