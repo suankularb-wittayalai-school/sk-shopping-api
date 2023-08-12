@@ -31,7 +31,6 @@ impl Config {
             google_oauth_client_id,
             google_oauth_client_secret,
             google_oauth_redirect_url,
-            omise_secret_key,
         }
     }
 }

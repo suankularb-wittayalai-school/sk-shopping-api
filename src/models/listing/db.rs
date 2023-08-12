@@ -61,12 +61,35 @@ impl ListingTable {
     }
 
     fn get_default_query() -> String {
-        "SELECT listings.*, MIN(price) as price, MIN(discounted_price) as discounted_price, CAST(SUM(stock_added) as INT8) as lifetime_stock, CAST(SUM(amount) as INT8) as amount_sold, MIN(preorder_start) as preorder_start, MAX(preorder_end) as preorder_end
-        FROM listings 
-        INNER JOIN items ON listings.id = items.listing_id 
-        LEFT JOIN item_stock_updates ON item_stock_updates.item_id = items.id
-        LEFT JOIN order_items ON order_items.item_id = items.id
-        ".to_string()
+        "SELECT
+        listings.*,
+        CAST(SUM(stock_added) AS INT8) AS lifetime_stock,
+        CAST(SUM(amount) AS INT8) AS amount_sold,
+        min(price) as price,
+        min(discounted_price) as discounted_price,
+        MIN(preorder_start) AS preorder_start,
+        MAX(preorder_end) AS preorder_end
+      FROM
+        listings
+        INNER JOIN items ON listings.id = items.listing_id
+        LEFT JOIN (
+          SELECT
+            item_id,
+            SUM(stock_added) AS stock_added
+          FROM item_stock_updates
+          GROUP BY item_id
+        ) AS stock_agg ON items.id = stock_agg.item_id
+        LEFT JOIN (
+          SELECT
+            item_id,
+            SUM(amount) AS amount
+          FROM order_items WHERE order_id IN (
+            SELECT id FROM orders WHERE NOT shipment_status = 'canceled'
+          )
+          GROUP BY item_id
+        ) AS amount_agg ON items.id = amount_agg.item_id
+        "
+        .to_string()
     }
 
     fn get_count_query() -> String {

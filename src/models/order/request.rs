@@ -48,6 +48,9 @@ pub struct CreatableOrder {
     address: Option<Address>,
     receiver_name: String,
     payment_method: PaymentMethod,
+    payment_slip_url: Option<String>,
+    contact_email: String,
+    contact_phone_number: Option<String>,
 }
 
 impl CreatableOrder {
@@ -59,6 +62,76 @@ impl CreatableOrder {
         let mut total_price = 0;
 
         let mut transaction = pool.begin().await?;
+
+        // make sure all the items are not out of stock and they are from the same shop
+        let shop_ids = sqlx::query(
+            r#"
+            SELECT DISTINCT shop_id
+            FROM items
+            WHERE id = ANY($1)
+            "#,
+        )
+        .bind(
+            &self
+                .items
+                .iter()
+                .map(|item| item.item_id)
+                .collect::<Vec<sqlx::types::Uuid>>(),
+        )
+        .fetch_all(transaction.as_mut())
+        .await?
+        .into_iter()
+        .map(|row| row.get::<sqlx::types::Uuid, _>("shop_id"))
+        .collect::<Vec<sqlx::types::Uuid>>();
+
+        if shop_ids.len() != 1 {
+            return Err(sqlx::Error::RowNotFound);
+        }
+
+        let curr_stock = sqlx::query(
+            "SELECT
+        CAST(SUM(stock_added) AS INT8) - CAST(SUM(amount) AS INT8) AS stock_left
+      FROM
+        items
+        LEFT JOIN (
+          SELECT
+            item_id,
+            SUM(stock_added) AS stock_added
+          FROM item_stock_updates
+          GROUP BY item_id
+        ) AS stock_agg ON items.id = stock_agg.item_id
+        LEFT JOIN (
+          SELECT
+            item_id,
+            SUM(amount) AS amount
+          FROM order_items WHERE order_id IN (
+            SELECT id FROM orders WHERE NOT (shipment_status = 'canceled' OR (created_at > NOW() - INTERVAL '1 day' AND is_paid = FALSE))
+          )
+          GROUP BY item_id
+        ) AS amount_agg ON items.id = amount_agg.item_id
+      WHERE
+        items.id = ANY($1)
+      GROUP BY
+        items.id",
+        )
+        .bind(
+            &self
+                .items
+                .iter()
+                .map(|item| item.item_id)
+                .collect::<Vec<sqlx::types::Uuid>>(),
+        )
+        .fetch_all(transaction.as_mut())
+        .await?
+        .into_iter()
+        .map(|row| row.get::<i64, _>("stock_left"))
+        .collect::<Vec<i64>>();
+
+        for (i, item) in self.items.iter().enumerate() {
+            if curr_stock[i] < item.amount {
+                return Err(sqlx::Error::RowNotFound);
+            }
+        }
 
         for item in &self.items {
             let item_db = sqlx::query(
@@ -90,8 +163,8 @@ impl CreatableOrder {
         // create order
         let order_id = sqlx::query(
             r#"
-            INSERT INTO orders (buyer_id, street_address_line_1, street_address_line_2, province, district, zip_code, delivery_type, receiver_name, payment_method, total_price)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            INSERT INTO orders (buyer_id, street_address_line_1, street_address_line_2, province, district, zip_code, delivery_type, receiver_name, payment_method, total_price, payment_slip_url, contact_email, contact_phone_number)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             RETURNING id
             "#,
         )
@@ -105,6 +178,9 @@ impl CreatableOrder {
         .bind(self.receiver_name.clone())
         .bind(self.payment_method)
         .bind(total_price)
+        .bind(self.payment_slip_url.clone())
+        .bind(self.contact_email.clone())
+        .bind(self.contact_phone_number.clone())
         .fetch_one(transaction.as_mut())
         .await?
         .get::<sqlx::types::Uuid, _>("id");

@@ -71,6 +71,7 @@ impl sqlx::Decode<'_, sqlx::Postgres> for OrderStatus {
             "not_shipped_out" => Ok(Self::NotShippedOut),
             "pending" => Ok(Self::Pending),
             "delivered" => Ok(Self::Delivered),
+            "canceled" => Ok(Self::Canceled),
             _ => Err("invalid order status".into()),
         }
     }
@@ -189,6 +190,9 @@ pub struct OrderTable {
     pub receiver_name: String,
     pub total_price: i64,
     pub payment_method: PaymentMethod,
+    pub payment_slip_url: Option<String>,
+    pub contact_email: String,
+    pub contact_phone_number: Option<String>,
 }
 
 impl OrderTable {
