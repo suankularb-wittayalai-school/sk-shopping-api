@@ -23,7 +23,6 @@ pub async fn create_orders(
     user: OptionalUser,
 ) -> Result<impl Responder, actix_web::Error> {
     let pool = &data.db;
-    let omise_secret = &data.env.omise_secret_key;
 
     let data = match &request.data {
         Some(data) => data,
@@ -65,7 +64,7 @@ pub async fn create_orders(
     let mut order_ids = Vec::new();
 
     for order in data {
-        let order_id = order.insert(pool, &omise_secret, user_id).await;
+        let order_id = order.insert(pool, user_id).await;
 
         order_ids.push(order_id);
     }

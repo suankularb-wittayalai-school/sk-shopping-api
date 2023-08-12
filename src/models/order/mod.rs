@@ -14,7 +14,6 @@ use super::item::Item;
 
 pub(crate) mod db;
 pub(crate) mod fetch_levels;
-pub(crate) mod omise;
 pub(crate) mod request;
 
 #[derive(Debug, Deserialize, Serialize)]

@@ -27,6 +27,8 @@ pub struct DefaultOrder {
     pub buyer: Option<User>,
     pub receiver_name: String,
     pub payment_method: PaymentMethod,
+    // TODO: add promptpay_download_url
+    // pub promptpay_download_url: Option<String>,
 }
 
 impl DefaultOrder {

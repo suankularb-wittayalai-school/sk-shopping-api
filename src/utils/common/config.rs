@@ -7,7 +7,6 @@ pub struct Config {
     pub google_oauth_client_id: String,
     pub google_oauth_client_secret: String,
     pub google_oauth_redirect_url: String,
-    pub omise_secret_key: String,
 }
 
 impl Config {
@@ -23,8 +22,6 @@ impl Config {
             .expect("GOOGLE_OAUTH_CLIENT_SECRET must be set");
         let google_oauth_redirect_url = std::env::var("GOOGLE_OAUTH_REDIRECT_URL")
             .expect("GOOGLE_OAUTH_REDIRECT_URL must be set");
-        let omise_secret_key =
-            std::env::var("OMISE_SECRET_KEY").expect("OMISE_SECRET_KEY must be set");
 
         Config {
             client_origin,

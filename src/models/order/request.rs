@@ -4,10 +4,7 @@ use uuid::Uuid;
 
 use crate::models::address::Address;
 
-use super::{
-    db::{DeliveryType, OrderStatus, PaymentMethod},
-    omise,
-};
+use super::db::{DeliveryType, OrderStatus, PaymentMethod};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryableOrder {
@@ -57,7 +54,6 @@ impl CreatableOrder {
     pub async fn insert(
         &self,
         pool: &sqlx::PgPool,
-        omise_secret_key: &str,
         user_id: Option<Uuid>,
     ) -> Result<Uuid, sqlx::Error> {
         let mut total_price = 0;
@@ -79,34 +75,6 @@ impl CreatableOrder {
             total_price += item_db.get::<i64, _>("price") * item.amount;
         }
 
-        // create omise charge
-        let omise_charge = match self.payment_method {
-            PaymentMethod::Promptpay => {
-                let res = omise::OmiseCharge::new(
-                    total_price,
-                    PaymentMethod::Promptpay,
-                    omise_secret_key,
-                )
-                .await;
-
-                match res {
-                    Ok(omise_charge) => Some(omise_charge),
-                    Err(_) => None,
-                }
-            }
-            // PaymentMethod::Kplus => {
-            //     let res =
-            //         omise::OmiseCharge::new(total_price, PaymentMethod::Kplus, omise_secret_key)
-            //             .await;
-
-            //     match res {
-            //         Ok(omise_charge) => Some(omise_charge),
-            //         Err(_) => None,
-            //     }
-            // }
-            _ => None,
-        };
-
         let (street_address_line_1, street_address_line_2, province, district, zip_code) =
             match &self.address {
                 Some(address) => (
@@ -122,7 +90,7 @@ impl CreatableOrder {
         // create order
         let order_id = sqlx::query(
             r#"
-            INSERT INTO orders (buyer_id, street_address_line_1, street_address_line_2, province, district, zip_code, delivery_type, receiver_name, payment_method, total_price, omise_charge_id)
+            INSERT INTO orders (buyer_id, street_address_line_1, street_address_line_2, province, district, zip_code, delivery_type, receiver_name, payment_method, total_price)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING id
             "#,
@@ -137,7 +105,6 @@ impl CreatableOrder {
         .bind(self.receiver_name.clone())
         .bind(self.payment_method)
         .bind(total_price)
-        .bind(omise_charge.map(|omise_charge| omise_charge.id))
         .fetch_one(transaction.as_mut())
         .await?
         .get::<sqlx::types::Uuid, _>("id");
