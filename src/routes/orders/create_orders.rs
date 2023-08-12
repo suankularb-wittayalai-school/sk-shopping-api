@@ -33,7 +33,7 @@ pub async fn create_orders(
                     code: 400,
                     error_type: "bad_request".to_string(),
                     detail: "request body is empty".to_string(),
-                    source: format!("/orders"),
+                    source: "/orders".to_string(),
                 },
                 Some(MetadataType::new(None::<PaginationType>)),
             );

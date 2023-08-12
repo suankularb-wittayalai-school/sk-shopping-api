@@ -105,7 +105,6 @@ impl ListingTable {
         (
             Vec<String>,
             Vec<&'a sqlx::types::Uuid>,
-            Vec<&'a Vec<sqlx::types::Uuid>>,
             Vec<bool>,
             Vec<&'a RangeQuery>,
         ),
@@ -114,12 +113,11 @@ impl ListingTable {
 
         let mut string_params = Vec::new();
         let mut uuid_params = Vec::new();
-        let mut uuid_array_params = Vec::new();
         let mut bool_params = Vec::new();
         let mut range_params = Vec::new();
 
         if let Some(q) = &filter.q {
-            if query.contains("WHERE") {
+            if params_count != 0 {
                 query.push_str(&format!(
                     " AND (listing.name ILIKE ${} OR description ILIKE ${})",
                     params_count + 1,
@@ -139,7 +137,7 @@ impl ListingTable {
 
         if let Some(data) = &filter.data {
             if let Some(name) = &data.name {
-                if query.contains("WHERE") {
+                if params_count != 0 {
                     query.push_str(&format!(" AND listing.name ILIKE ${}", params_count + 1));
                 } else {
                     query.push_str(&format!(" WHERE listing.name ILIKE ${}", params_count + 1));
@@ -150,7 +148,7 @@ impl ListingTable {
             }
 
             if let Some(description) = &data.description {
-                if query.contains("WHERE") {
+                if params_count != 0 {
                     query.push_str(&format!(" AND description ILIKE ${}", params_count + 1));
                 } else {
                     query.push_str(&format!(" WHERE description ILIKE ${}", params_count + 1));
@@ -161,7 +159,7 @@ impl ListingTable {
             }
 
             if let Some(id) = &data.id {
-                if query.contains("WHERE") {
+                if params_count != 0 {
                     query.push_str(&format!(" AND listing.id = ${}", params_count + 1));
                 } else {
                     query.push_str(&format!(" WHERE listing.id = ${}", params_count + 1));
@@ -172,81 +170,110 @@ impl ListingTable {
             }
 
             if let Some(shop_ids) = &data.shop_ids {
-                if query.contains("WHERE") {
-                    query.push_str(&format!(" AND shop_id = ANY(${})", params_count + 1));
+                if params_count != 0 {
+                    query.push_str(&format!(" AND shop_id IN ("));
                 } else {
-                    query.push_str(&format!(" WHERE shop_id = ANY(${})", params_count + 1));
+                    query.push_str(&format!(" WHERE shop_id IN ("));
                 }
 
-                uuid_array_params.push(shop_ids);
-                params_count += 1;
+                for (i, shop_id) in shop_ids.iter().enumerate() {
+                    if i != 0 {
+                        query.push_str(", ");
+                    }
+
+                    // query.push_str(&format!("${}", params_count + i + 1));
+                    query.push_str(&format!("${}", params_count + 1));
+                    uuid_params.push(shop_id);
+
+                    params_count += 1;
+                }
+
+                query.push_str(")");
             }
 
             if let Some(collection_ids) = &data.collection_ids {
-                if query.contains("WHERE") {
+                if params_count != 0 {
                     query.push_str(&format!(
-                        " AND listings.id = ANY(
-                            SELECT listing_id FROM listing_collections WHERE collection_id = ANY(${})
-                        )",
-                        params_count + 1
+                        " AND listings.id IN (
+                            SELECT listing_id FROM listing_collections WHERE collection_id IN ("
                     ));
                 } else {
                     query.push_str(&format!(
-                        " WHERE listings.id = ANY(
-                            SELECT listing_id FROM listing_collections WHERE collection_id = ANY(${})
-                        )",
-                        params_count + 1
+                        " WHERE listings.id IN (
+                            SELECT listing_id FROM listing_collections WHERE collection_id IN ("
                     ));
                 }
 
-                uuid_array_params.push(collection_ids);
-                params_count += 1;
+                for (i, collection_id) in collection_ids.iter().enumerate() {
+                    if i != 0 {
+                        query.push_str(", ");
+                    }
+
+                    query.push_str(&format!("${}", params_count + 1));
+                    uuid_params.push(collection_id);
+
+                    params_count += 1;
+                }
+
+                query.push_str("))");
             }
 
             if let Some(item_ids) = &data.item_ids {
-                if query.contains("WHERE") {
+                if params_count != 0 {
                     query.push_str(&format!(
-                        " AND listings.id = ANY(
-                            SELECT listing_id FROM items WHERE id = ANY(${})
-                        )",
-                        params_count + 1
+                        " AND listings.id IN (
+                            SELECT listing_id FROM items WHERE id IN ("
                     ));
                 } else {
                     query.push_str(&format!(
-                        " WHERE listings.id = ANY(
-                            SELECT listing_id FROM items WHERE id = ANY(${})
-                        )",
-                        params_count + 1
+                        " WHERE listings.id IN (
+                            SELECT listing_id FROM items WHERE id IN ("
                     ));
                 }
 
-                uuid_array_params.push(item_ids);
-                params_count += 1;
+                for (i, item_id) in item_ids.iter().enumerate() {
+                    if i != 0 {
+                        query.push_str(", ");
+                    }
+
+                    query.push_str(&format!("${}", params_count + 1));
+                    uuid_params.push(item_id);
+
+                    params_count += 1;
+                }
+
+                query.push_str("))");
             }
 
             if let Some(category_ids) = &data.category_ids {
-                if query.contains("WHERE") {
+                if params_count != 0 {
                     query.push_str(&format!(
-                        " AND listings.id = ANY(
-                            SELECT listing_id FROM listing_categories WHERE category_id = ANY(${})
-                        )",
-                        params_count + 1
+                        " AND listings.id IN (
+                            SELECT listing_id FROM listing_categories WHERE category_id IN ("
                     ));
                 } else {
                     query.push_str(&format!(
-                        " WHERE listings.id = ANY(
-                            SELECT listing_id FROM listing_categories WHERE category_id = ANY(${})
-                        )",
-                        params_count + 1
+                        " WHERE listings.id IN (
+                            SELECT listing_id FROM listing_categories WHERE category_id IN ("
                     ));
                 }
 
-                uuid_array_params.push(category_ids);
-                params_count += 1;
+                for (i, category_id) in category_ids.iter().enumerate() {
+                    if i != 0 {
+                        query.push_str(", ");
+                    }
+
+                    query.push_str(&format!("${}", params_count + 1));
+                    uuid_params.push(category_id);
+
+                    params_count += 1;
+                }
+
+                query.push_str("))");
             }
 
             if let Some(is_hidden) = data.is_hidden {
-                if query.contains("WHERE") {
+                if params_count != 0 {
                     query.push_str(&format!(" AND is_hidden = ${}", params_count + 1));
                 } else {
                     query.push_str(&format!(" WHERE is_hidden = ${}", params_count + 1));
@@ -257,7 +284,7 @@ impl ListingTable {
             }
 
             if let Some(price_range) = &data.price_range {
-                if query.contains("WHERE") {
+                if params_count != 0 {
                     query.push_str(&format!(
                         " AND (price >= ${} AND price <= ${})",
                         params_count + 1,
@@ -276,7 +303,7 @@ impl ListingTable {
             }
 
             if let Some(stock_range) = &data.stock_range {
-                if query.contains("WHERE") {
+                if params_count != 0 {
                     query.push_str(&format!(
                         " AND (stock >= ${} AND stock <= ${})",
                         params_count + 1,
@@ -297,13 +324,7 @@ impl ListingTable {
 
         (
             params_count,
-            (
-                string_params,
-                uuid_params,
-                uuid_array_params,
-                bool_params,
-                range_params,
-            ),
+            (string_params, uuid_params, bool_params, range_params),
         )
     }
 
@@ -383,17 +404,12 @@ impl ListingTable {
     ) -> Result<Vec<Self>, sqlx::Error> {
         let mut query = Self::get_default_query();
 
-        let (
-            params_count,
-            (string_params, uuid_params, uuid_array_params, bool_params, range_params),
-        ) = if let Some(filter) = filter {
-            Self::append_where_clause(&mut query, filter, 0)
-        } else {
-            (
-                0,
-                (Vec::new(), Vec::new(), Vec::new(), Vec::new(), Vec::new()),
-            )
-        };
+        let (params_count, (string_params, uuid_params, bool_params, range_params)) =
+            if let Some(filter) = filter {
+                Self::append_where_clause(&mut query, filter, 0)
+            } else {
+                (0, (Vec::new(), Vec::new(), Vec::new(), Vec::new()))
+            };
 
         // add group by clause
         query.push_str(" GROUP BY listings.id");
@@ -403,6 +419,8 @@ impl ListingTable {
         let (_params_count, pagination_params) =
             Self::append_limit_clause(&mut query, pagination, params_count);
 
+        // println!("{}", query);
+
         let mut query_builder = sqlx::query_as::<_, Self>(&query);
 
         for param in string_params {
@@ -410,10 +428,6 @@ impl ListingTable {
         }
 
         for param in uuid_params {
-            query_builder = query_builder.bind(param);
-        }
-
-        for param in uuid_array_params {
             query_builder = query_builder.bind(param);
         }
 
@@ -433,17 +447,17 @@ impl ListingTable {
         query_builder.fetch_all(pool).await
     }
 
-    pub async fn delete(pool: &sqlx::PgPool, id: Uuid) -> Result<(), sqlx::Error> {
-        let query = format!("DELETE FROM listings WHERE id = $1 ");
+    // pub async fn delete(pool: &sqlx::PgPool, id: Uuid) -> Result<(), sqlx::Error> {
+    //     let query = format!("DELETE FROM listings WHERE id = $1 ");
 
-        match sqlx::query(&query).bind(id).execute(pool).await {
-            Ok(_) => Ok(()),
-            Err(e) => Err(e),
-        }
-    }
+    //     match sqlx::query(&query).bind(id).execute(pool).await {
+    //         Ok(_) => Ok(()),
+    //         Err(e) => Err(e),
+    //     }
+    // }
 
     pub async fn bulk_delete(pool: &sqlx::PgPool, ids: Vec<Uuid>) -> Result<(), sqlx::Error> {
-        let query = format!("DELETE FROM listings WHERE id = ANY($1) ");
+        let query = "DELETE FROM listings WHERE id = ANY($1) ";
 
         match sqlx::query(&query).bind(ids).execute(pool).await {
             Ok(_) => Ok(()),

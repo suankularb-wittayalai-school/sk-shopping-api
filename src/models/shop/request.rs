@@ -24,7 +24,7 @@ pub enum SortableShop {
     CreatedAt,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct UpdatableShop {
     pub name: Option<FlexibleMultiLangString>,
