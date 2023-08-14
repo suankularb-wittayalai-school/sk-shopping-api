@@ -152,6 +152,11 @@ impl CreatableOrder {
             total_price += item_db.get::<i64, _>("price") * item.amount;
         }
 
+        let shipping_fee = match &self.delivery_type {
+            DeliveryType::Delivery => 70,
+            DeliveryType::SchoolPickup => 0,
+        };
+
         let (street_address_line_1, street_address_line_2, province, district, zip_code) =
             match &self.address {
                 Some(address) => (
@@ -181,7 +186,7 @@ impl CreatableOrder {
         .bind(self.delivery_type)
         .bind(self.receiver_name.clone())
         .bind(self.payment_method)
-        .bind(total_price)
+        .bind(total_price + shipping_fee)
         .bind(self.payment_slip_url.clone())
         .bind(self.contact_email.clone())
         .bind(self.contact_phone_number.clone())
