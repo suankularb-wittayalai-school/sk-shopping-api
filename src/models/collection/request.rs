@@ -38,7 +38,7 @@ impl CreatableCollection {
             returning id
             "#,
         )
-        .bind(&self.shop_id)
+        .bind(self.shop_id)
         .bind(&self.name)
         .bind(&self.description)
         .bind(&self.foreground_url)

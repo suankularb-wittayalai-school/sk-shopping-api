@@ -59,7 +59,8 @@ async fn main() -> std::io::Result<()> {
             .allowed_origin("https://mysk.school")
             .allowed_origin("https://mysk.school")
             .allowed_origin("https://shopping.skkornor.org")
-            .allowed_origin("https://*.skkornor.org")
+            .allowed_origin("https://preview.shopping.skkornor.org")
+            .allowed_origin("https://pr.shopping.skkornor.org")
             // allow vercel previews in suankularb-developers.vercel.app/en-US
             .allowed_origin("https://*.vercel.app")
             // .allow_any_origin()
