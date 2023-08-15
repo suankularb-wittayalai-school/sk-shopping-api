@@ -127,7 +127,7 @@ impl UpdatableShop {
         query.push_str(&param_segments.join(", "));
         query.push_str(&format!(" WHERE id = ${}", param_count));
 
-        dbg!(&query);
+        // dbg!(&query);
 
         let mut query_builder = sqlx::query(&query);
 
