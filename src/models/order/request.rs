@@ -70,7 +70,8 @@ impl CreatableOrder {
             r#"
             SELECT DISTINCT shop_id
             FROM items
-            WHERE id = ANY($1)
+            INNER JOIN listings ON items.listing_id = listings.id
+            WHERE items.id = ANY($1)
             "#,
         )
         .bind(
