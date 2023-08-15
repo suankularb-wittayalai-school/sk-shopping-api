@@ -95,7 +95,8 @@ impl CreatableOrder {
 
         let curr_stock = sqlx::query(
             "SELECT
-        CAST(SUM(stock_added) AS INT8) - CAST(SUM(amount) AS INT8) AS stock_left
+            CAST(SUM(stock_added) AS INT8) as life_time_stock_added,
+            CAST(SUM(amount) AS INT8) as life_time_amount
       FROM
         items
         LEFT JOIN (
@@ -129,7 +130,7 @@ impl CreatableOrder {
         .fetch_all(transaction.as_mut())
         .await?
         .into_iter()
-        .map(|row| row.get::<i64, _>("stock_left"))
+        .map(|row| row.get::<Option<i64>, _>("life_time_stock_added").unwrap_or(0) - row.get::<Option<i64>, _>("life_time_amount").unwrap_or(0))
         .collect::<Vec<i64>>();
 
         for (i, item) in self.items.iter().enumerate() {
