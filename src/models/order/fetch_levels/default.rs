@@ -13,6 +13,7 @@ use crate::models::{
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DefaultOrder {
     pub id: sqlx::types::Uuid,
+    pub ref_id: String,
     pub is_paid: bool,
     pub is_verified: bool,
     pub shipment_status: OrderStatus,
@@ -30,6 +31,7 @@ pub struct DefaultOrder {
     pub payment_method: PaymentMethod,
     pub payment_slip_url: Option<String>,
     pub promptpay_qr_code_url: Option<String>,
+    pub qr_code_file: Option<String>,
     pub contact_email: String,
     pub contact_phone_number: Option<String>,
 }
@@ -134,6 +136,7 @@ impl DefaultOrder {
 
         Ok(Self {
             id: order.id,
+            ref_id: order.ref_id,
             is_paid: order.is_paid,
             is_verified: order.is_verified,
             shipment_status: order.shipment_status,
@@ -151,6 +154,7 @@ impl DefaultOrder {
             payment_method: order.payment_method,
             payment_slip_url: order.payment_slip_url,
             promptpay_qr_code_url,
+            qr_code_file: order.qr_code_file,
             contact_email: order.contact_email,
             contact_phone_number: order.contact_phone_number,
         })

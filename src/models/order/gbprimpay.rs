@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct GbPrimePayQRRequest {
+pub struct GbPrimePayQRRequest {
     token: String,
     amount: i64,
     reference_no: String,
@@ -14,6 +14,50 @@ struct GbPrimePayQRRequest {
     customer_email: Option<String>,
     customer_telephone: Option<String>,
     customer_address: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub enum GBPRetryFlag {
+    #[serde(rename = "Y")]
+    Retry,
+    #[serde(rename = "N")]
+    FirstTime,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub enum ResultCode {
+    #[serde(rename = "00")]
+    Success,
+    #[serde(rename = "11")]
+    InvalidReferenceNo,
+    #[serde(rename = "12")]
+    InvalidGBReferenceNo,
+    #[serde(rename = "14")]
+    InvalidAmount,
+    #[serde(rename = "21")]
+    DuplicateTransaction,
+    #[serde(rename = "22")]
+    OverDue,
+    #[serde(rename = "99")]
+    SystemError,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GbPrimePayWebHookRequest {
+    pub amount: i64,
+    pub reference_no: String,
+    pub gbp_reference_no: String,
+    pub result_code: ResultCode,
+    pub date: Option<String>, // DDMMYYYY
+    pub time: Option<String>, // HHMMSS
+    pub currency_code: Option<String>,
+    pub detail: Option<String>,
+    pub customer_name: Option<String>,
+    pub customer_email: Option<String>,
+    pub customer_telephone: Option<String>,
+    pub customer_address: Option<String>,
+    pub retry_flag: Option<GBPRetryFlag>,
 }
 
 impl GbPrimePayQRRequest {
@@ -31,7 +75,7 @@ impl GbPrimePayQRRequest {
             token,
             amount,
             reference_no,
-            background_url: "https://api.shopping.skkornor.org/order_webhook".to_string(),
+            background_url: "https://api.shopping.skkornor.org/order-webhook".to_string(),
             detail,
             customer_name,
             customer_email,
@@ -43,7 +87,7 @@ impl GbPrimePayQRRequest {
 
 // fetch API from gbprimepay as application/x-www-form-urlencoded and return as image/png
 // return the image/png as base64
-pub async fn get_qrcode(
+pub async fn create_qr_code(
     token: String,
     amount: i64,
     reference_no: String,

@@ -7,6 +7,8 @@ pub struct Config {
     pub google_oauth_client_id: String,
     pub google_oauth_client_secret: String,
     pub google_oauth_redirect_url: String,
+    pub google_email_user: String,
+    pub google_email_password: String,
 }
 
 impl Config {
@@ -23,6 +25,11 @@ impl Config {
         let google_oauth_redirect_url = std::env::var("GOOGLE_OAUTH_REDIRECT_URL")
             .expect("GOOGLE_OAUTH_REDIRECT_URL must be set");
 
+        let google_email_user =
+            std::env::var("GOOGLE_EMAIL_USER").expect("GOOGLE_EMAIL_USER must be set");
+        let google_email_password =
+            std::env::var("GOOGLE_EMAIL_PASSWORD").expect("GOOGLE_EMAIL_PASSWORD must be set");
+
         Config {
             client_origin,
             jwt_secret,
@@ -31,6 +38,8 @@ impl Config {
             google_oauth_client_id,
             google_oauth_client_secret,
             google_oauth_redirect_url,
+            google_email_user,
+            google_email_password,
         }
     }
 }

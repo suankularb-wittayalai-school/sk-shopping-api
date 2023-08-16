@@ -2,6 +2,7 @@ use actix_cors::Cors;
 use actix_web::middleware::Logger;
 use actix_web::{http::header, web, App, HttpServer};
 use dotenv::dotenv;
+use lettre::transport::smtp::authentication::Credentials;
 // use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use std::env;
@@ -12,6 +13,7 @@ mod utils;
 
 pub struct AppState {
     db: Pool<Postgres>,
+    smtp_credential: Credentials,
     env: utils::common::config::Config,
 }
 
@@ -22,6 +24,8 @@ async fn main() -> std::io::Result<()> {
     }
     dotenv().ok();
     env_logger::init();
+
+    let env = utils::common::config::Config::init();
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
@@ -39,6 +43,11 @@ async fn main() -> std::io::Result<()> {
             std::process::exit(1);
         }
     };
+
+    let smtp_credential = Credentials::new(
+        env.google_email_user.clone(),
+        env.google_email_password.clone(),
+    );
 
     // let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
 
@@ -61,8 +70,9 @@ async fn main() -> std::io::Result<()> {
             .allowed_origin("https://shopping.skkornor.org")
             .allowed_origin("https://preview.shopping.skkornor.org")
             .allowed_origin("https://pr.shopping.skkornor.org")
-            // allow vercel previews in suankularb-developers.vercel.app/en-US
-            .allowed_origin("https://*.vercel.app")
+            // allow origin for gbprimepay to access webhook
+            .allowed_origin("https://api.globalprimepay.com")
+            .allowed_origin("https://api.gbprimepay.com")
             // .allow_any_origin()
             .allowed_methods(vec!["GET", "POST", "PATCH", "DELETE", "PUT"])
             .allowed_headers(vec![
@@ -77,7 +87,8 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(AppState {
                 db: pool.clone(),
-                env: utils::common::config::Config::init(),
+                env: env.clone(),
+                smtp_credential: smtp_credential.clone(),
             }))
             // .service(web::scope("/api/v1").configure(routes::config))
             .configure(routes::config)

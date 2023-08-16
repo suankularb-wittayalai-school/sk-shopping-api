@@ -194,6 +194,8 @@ pub struct OrderTable {
     pub payment_slip_url: Option<String>,
     pub contact_email: String,
     pub contact_phone_number: Option<String>,
+    pub ref_id: String,
+    pub qr_code_file: Option<String>,
 }
 
 impl OrderTable {

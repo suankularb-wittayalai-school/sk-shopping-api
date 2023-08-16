@@ -13,6 +13,7 @@ use crate::{
             Order,
         },
     },
+    utils::email::send_invoice_email,
     AppState,
 };
 
@@ -23,6 +24,7 @@ pub async fn create_orders(
     user: OptionalUser,
 ) -> Result<impl Responder, actix_web::Error> {
     let pool = &data.db;
+    let credential = &data.smtp_credential;
 
     let data = match &request.data {
         Some(data) => data,
@@ -98,6 +100,51 @@ pub async fn create_orders(
         Some(descendant_fetch_level) => descendant_fetch_level,
         None => FetchLevel::IdOnly,
     };
+
+    for order_id in order_ids.clone() {
+        let order = Order::get_by_id(
+            pool,
+            order_id,
+            Some(&FetchLevel::Default),
+            Some(&FetchLevel::Compact),
+        )
+        .await;
+
+        let order = match order {
+            Err(err) => {
+                let response: ErrorResponseType = ErrorResponseType::new(
+                    ErrorType {
+                        id: Uuid::new_v4().to_string(),
+                        code: 500,
+                        error_type: "internal_server_error".to_string(),
+                        detail: err.to_string(),
+                        source: format!("/orders"),
+                    },
+                    Some(MetadataType::new(None::<PaginationType>)),
+                );
+
+                return Ok(HttpResponse::InternalServerError().json(response));
+            }
+            Ok(order) => order,
+        };
+
+        let res = send_invoice_email(credential, order);
+
+        if let Err(err) = res {
+            let response: ErrorResponseType = ErrorResponseType::new(
+                ErrorType {
+                    id: Uuid::new_v4().to_string(),
+                    code: 500,
+                    error_type: "internal_server_error".to_string(),
+                    detail: err.to_string(),
+                    source: format!("/orders"),
+                },
+                Some(MetadataType::new(None::<PaginationType>)),
+            );
+
+            return Ok(HttpResponse::InternalServerError().json(response));
+        }
+    }
 
     let orders = Order::get_by_ids(
         pool,
