@@ -52,6 +52,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(orders::query_orders::query_orders);
     cfg.service(orders::create_orders::create_orders);
     cfg.service(orders::update_order_by_id::update_order_by_id);
+    cfg.service(orders::upload_slip_payment::upload_slip_payment);
 
     cfg.service(category::all_categories::all_categories);
     cfg.service(
