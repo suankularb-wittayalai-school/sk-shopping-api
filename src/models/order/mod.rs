@@ -14,6 +14,7 @@ use super::item::Item;
 
 pub(crate) mod db;
 pub(crate) mod fetch_levels;
+pub(crate) mod gbprimpay;
 pub(crate) mod request;
 
 #[derive(Debug, Deserialize, Serialize)]
