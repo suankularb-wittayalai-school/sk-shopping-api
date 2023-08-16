@@ -216,6 +216,54 @@ impl CreatableOrder {
 
         Ok(order_id)
     }
+
+    pub fn validate(&self) -> Result<&Self, String> {
+        if self.items.is_empty() {
+            return Err("items must not be empty".to_string());
+        }
+
+        if self.receiver_name.is_empty() {
+            return Err("receiver_name must not be empty".to_string());
+        }
+
+        if self.contact_email.is_empty() {
+            return Err("contact_email must not be empty".to_string());
+        }
+
+        // make sure email is valid
+        let email_regex =
+            regex::Regex::new(r"^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$").unwrap();
+
+        if !email_regex.is_match(&self.contact_email) {
+            return Err("contact_email must be a valid email".to_string());
+        }
+
+        if self.delivery_type == DeliveryType::Delivery && self.address.is_none() {
+            return Err("address must not be empty".to_string());
+        }
+
+        if self.delivery_type == DeliveryType::Delivery && self.address.is_some() {
+            let address = self.address.as_ref().unwrap();
+
+            if address.street_address_line_1.is_empty() {
+                return Err("street_address_line_1 must not be empty".to_string());
+            }
+
+            if address.province.is_empty() {
+                return Err("province must not be empty".to_string());
+            }
+
+            if address.district.is_empty() {
+                return Err("district must not be empty".to_string());
+            }
+
+            if address.zip_code == 0 {
+                return Err("zip_code must not be empty".to_string());
+            }
+        }
+
+        Ok(self)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

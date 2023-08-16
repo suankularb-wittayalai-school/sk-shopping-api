@@ -66,6 +66,25 @@ pub async fn create_orders(
     let mut order_ids = Vec::new();
 
     for order in data {
+        // make sure that contact email is valid
+        let order = match order.validate() {
+            Ok(order) => order,
+            Err(err) => {
+                let response: ErrorResponseType = ErrorResponseType::new(
+                    ErrorType {
+                        id: Uuid::new_v4().to_string(),
+                        code: 400,
+                        error_type: "bad_request".to_string(),
+                        detail: err.to_string(),
+                        source: format!("/orders"),
+                    },
+                    Some(MetadataType::new(None::<PaginationType>)),
+                );
+
+                return Ok(HttpResponse::BadRequest().json(response));
+            }
+        };
+
         let order_id = order.insert(pool, user_id).await;
 
         order_ids.push(order_id);

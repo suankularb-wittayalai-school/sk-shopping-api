@@ -77,7 +77,7 @@ impl sqlx::Decode<'_, sqlx::Postgres> for OrderStatus {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum DeliveryType {
     SchoolPickup,
