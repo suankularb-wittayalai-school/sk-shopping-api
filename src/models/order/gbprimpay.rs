@@ -145,7 +145,7 @@ impl GbPrimePayQRRequest {
             token,
             amount,
             reference_no,
-            background_url: "https://api.shopping.skkornor.org/order-webhook".to_string(),
+            background_url: "https://api.shopping.skkornor.org/orders/webhook".to_string(),
             detail,
             customer_name: Some(customer_name),
             customer_email: Some(customer_email),
