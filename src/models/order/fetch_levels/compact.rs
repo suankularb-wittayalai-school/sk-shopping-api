@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::models::order::db::{DeliveryType, OrderStatus, OrderTable, PaymentMethod};
@@ -5,6 +6,7 @@ use crate::models::order::db::{DeliveryType, OrderStatus, OrderTable, PaymentMet
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompactOrder {
     pub id: sqlx::types::Uuid,
+    pub created_at: Option<DateTime<Utc>>,
     pub ref_id: String,
     pub receiver_name: String,
     pub is_paid: bool,
@@ -19,6 +21,7 @@ impl From<OrderTable> for CompactOrder {
     fn from(order: OrderTable) -> Self {
         Self {
             id: order.id,
+            created_at: order.created_at,
             ref_id: order.ref_id,
             receiver_name: order.receiver_name,
             is_paid: order.is_paid,
