@@ -24,6 +24,7 @@ pub enum SortableListing {
     CreatedAt,
     Stock,
     Price,
+    Priority,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

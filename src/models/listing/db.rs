@@ -353,7 +353,8 @@ impl ListingTable {
                     SortableListing::Name => query.push_str("name"),
                     SortableListing::CreatedAt => query.push_str("created_at"),
                     SortableListing::Price => query.push_str("price"),
-                    SortableListing::Stock => query.push_str(" lifetime_stock"),
+                    SortableListing::Stock => query.push_str("lifetime_stock"),
+                    SortableListing::Priority => query.push_str("priority"),
                 }
 
                 first = false;
