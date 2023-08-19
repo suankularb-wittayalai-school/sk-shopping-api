@@ -84,7 +84,7 @@ impl ListingTable {
             item_id,
             SUM(amount) AS amount
           FROM order_items WHERE order_id IN (
-            SELECT id FROM orders WHERE NOT (shipment_status = 'canceled' OR (created_at > NOW() - INTERVAL '1 day' AND is_paid = FALSE))
+            SELECT id FROM orders WHERE NOT (shipment_status = 'canceled' OR (created_at > NOW() - INTERVAL '3 minute' AND is_paid = FALSE))
           )
           GROUP BY item_id
         ) AS amount_agg ON items.id = amount_agg.item_id
