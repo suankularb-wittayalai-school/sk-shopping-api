@@ -176,7 +176,7 @@ impl UpdatableItem {
                     DELETE FROM item_colors WHERE item_id = $1
                     "#,
                 )
-                .bind(&item_id)
+                .bind(item_id)
                 .execute(transaction.as_mut())
                 .await?;
 
@@ -187,8 +187,8 @@ impl UpdatableItem {
                         VALUES ($1, $2)
                         "#,
                     )
-                    .bind(&item_id)
-                    .bind(&color)
+                    .bind(item_id)
+                    .bind(color)
                     .execute(transaction.as_mut())
                     .await?;
                 }
