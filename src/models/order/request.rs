@@ -13,7 +13,7 @@ pub struct QueryableOrder {
     pub collection_ids: Option<Vec<sqlx::types::Uuid>>,
     pub listing_ids: Option<Vec<sqlx::types::Uuid>>,
     pub item_ids: Option<Vec<sqlx::types::Uuid>>,
-    pub buyer_id: Option<Vec<sqlx::types::Uuid>>,
+    pub buyer_ids: Option<Vec<sqlx::types::Uuid>>,
     pub shipping_status: Option<OrderStatus>,
     pub delivery_type: Option<DeliveryType>,
     pub receiver_name: Option<String>,
