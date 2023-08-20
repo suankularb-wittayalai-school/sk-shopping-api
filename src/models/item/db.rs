@@ -331,7 +331,7 @@ impl ItemTable {
 
         let query = format!("DELETE FROM items WHERE id = $1 ");
 
-        match sqlx::query(&query)
+        let _ = match sqlx::query(&query)
             .bind(id)
             .execute(transaction.as_mut())
             .await
@@ -345,7 +345,7 @@ impl ItemTable {
             "DELETE FROM listings WHERE id = $1 AND id NOT IN (SELECT listing_id FROM items)"
         );
 
-        match sqlx::query(&query)
+        let _ = match sqlx::query(&query)
             .bind(id)
             .execute(transaction.as_mut())
             .await
@@ -364,7 +364,7 @@ impl ItemTable {
 
         let query = format!("DELETE FROM items WHERE id = ANY($1)");
 
-        match sqlx::query(&query)
+        let _ = match sqlx::query(&query)
             .bind(&ids)
             .execute(transaction.as_mut())
             .await
@@ -378,7 +378,7 @@ impl ItemTable {
             "DELETE FROM listings WHERE id = ANY($1) AND id NOT IN (SELECT listing_id FROM items)"
         );
 
-        match sqlx::query(&query)
+        let _ = match sqlx::query(&query)
             .bind(&ids)
             .execute(transaction.as_mut())
             .await

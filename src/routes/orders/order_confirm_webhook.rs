@@ -1,4 +1,4 @@
-use actix_web::{patch, web, HttpResponse, Responder};
+use actix_web::{post, web, HttpResponse, Responder};
 use mysk_lib::models::common::requests::FetchLevel;
 
 use crate::{
@@ -10,14 +10,16 @@ use crate::{
     AppState,
 };
 
-#[patch("/orders/webhook")]
-pub async fn upload_slip_payment(
+#[post("/orders/webhook")]
+pub async fn update_order_webhook(
     data: web::Data<AppState>,
     request: web::Json<GbPrimePayWebHookRequest>,
     // user: OptionalUser,
 ) -> Result<impl Responder, actix_web::Error> {
     let pool: &sqlx::Pool<sqlx::Postgres> = &data.db;
     let credential = &data.smtp_credential;
+
+    dbg!(&request);
 
     let data = request.into_inner();
 
