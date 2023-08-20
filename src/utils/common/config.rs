@@ -9,6 +9,7 @@ pub struct Config {
     pub google_oauth_redirect_url: String,
     pub google_email_user: String,
     pub google_email_password: String,
+    pub gbprimepay_token: String,
 }
 
 impl Config {
@@ -30,6 +31,9 @@ impl Config {
         let google_email_password =
             std::env::var("GOOGLE_EMAIL_PASSWORD").expect("GOOGLE_EMAIL_PASSWORD must be set");
 
+        let gbprimepay_token =
+            std::env::var("GBPRIMEPAY_TOKEN").expect("GBPRIMEPAY_TOKEN must be set");
+
         Config {
             client_origin,
             jwt_secret,
@@ -40,6 +44,7 @@ impl Config {
             google_oauth_redirect_url,
             google_email_user,
             google_email_password,
+            gbprimepay_token,
         }
     }
 }

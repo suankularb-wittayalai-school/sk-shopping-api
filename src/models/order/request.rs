@@ -1,10 +1,15 @@
+use mysk_lib::models::common::requests::FetchLevel;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use uuid::Uuid;
 
 use crate::models::address::Address;
 
-use super::db::{DeliveryType, OrderStatus, PaymentMethod};
+use super::{
+    db::{DeliveryType, OrderStatus, PaymentMethod},
+    gbprimpay::create_qr_code,
+    Order,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryableOrder {
@@ -59,6 +64,7 @@ impl CreatableOrder {
     pub async fn insert(
         &self,
         pool: &sqlx::PgPool,
+        gb_token: Option<String>,
         user_id: Option<Uuid>,
     ) -> Result<Uuid, sqlx::Error> {
         let mut total_price = 0;
@@ -211,8 +217,41 @@ impl CreatableOrder {
             .execute(transaction.as_mut())
             .await?;
         }
-
         transaction.commit().await?;
+
+        let order = Order::get_by_id(
+            pool,
+            order_id,
+            Some(&FetchLevel::Default),
+            Some(&FetchLevel::Compact),
+        )
+        .await?;
+
+        // create qr code
+        let qr_code = match self.payment_method {
+            PaymentMethod::Promptpay => {
+                let qr_code = create_qr_code(gb_token.unwrap_or("".to_string()), order).await;
+
+                match qr_code {
+                    Ok(qr_code) => Some(qr_code),
+                    Err(_) => None,
+                }
+            }
+            _ => None,
+        };
+
+        // update order with qr code
+        sqlx::query(
+            r#"
+            UPDATE orders
+            SET qr_code_file = $1
+            WHERE id = $2
+            "#,
+        )
+        .bind(qr_code)
+        .bind(order_id)
+        .execute(pool)
+        .await?;
 
         Ok(order_id)
     }

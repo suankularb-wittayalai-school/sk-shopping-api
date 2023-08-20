@@ -2,7 +2,10 @@ use actix_web::{patch, web, HttpResponse, Responder};
 use mysk_lib::models::common::requests::FetchLevel;
 
 use crate::{
-    models::order::{gbprimpay::GbPrimePayWebHookRequest, Order},
+    models::order::{
+        gbprimpay::{GbPrimePayWebHookRequest, ResultCode},
+        Order,
+    },
     utils::email::send_receipt_email,
     AppState,
 };
@@ -17,6 +20,10 @@ pub async fn upload_slip_payment(
     let credential = &data.smtp_credential;
 
     let data = request.into_inner();
+
+    if data.result_code != ResultCode::Success {
+        return Ok(HttpResponse::Ok().finish());
+    }
 
     let res = data.update_order_status(pool).await;
 

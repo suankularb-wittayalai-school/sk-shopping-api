@@ -25,6 +25,7 @@ pub async fn create_orders(
 ) -> Result<impl Responder, actix_web::Error> {
     let pool = &data.db;
     let credential = &data.smtp_credential;
+    let gb_token = &data.env.gbprimepay_token;
 
     let data = match &request.data {
         Some(data) => data,
@@ -85,7 +86,9 @@ pub async fn create_orders(
             }
         };
 
-        let order_id = order.insert(pool, user_id).await;
+        let order_id = order
+            .insert(pool, Some(gb_token.to_string()), user_id)
+            .await;
 
         order_ids.push(order_id);
     }

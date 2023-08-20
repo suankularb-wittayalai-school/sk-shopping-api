@@ -28,7 +28,7 @@ pub enum GBPRetryFlag {
     FirstTime,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, PartialEq)]
 pub enum ResultCode {
     #[serde(rename = "00")]
     Success,
