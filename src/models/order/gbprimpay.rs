@@ -160,12 +160,34 @@ impl GbPrimePayQRRequest {
 pub async fn create_qr_code(token: String, order: Order) -> Result<String, reqwest::Error> {
     let request = GbPrimePayQRRequest::new(token, order);
 
-    let data = serde_urlencoded::to_string(&request).expect("serialize issue");
+    // let data = serde_urlencoded::to_string(&request).expect("serialize issue");
+
+    let mut data = vec![];
+
+    data.push(("token", request.token));
+    data.push(("amount", request.amount.to_string()));
+    data.push(("reference_no", request.reference_no));
+    data.push(("background_url", request.background_url));
+    if let Some(detail) = request.detail {
+        data.push(("detail", detail));
+    }
+    if let Some(customer_name) = request.customer_name {
+        data.push(("customer_name", customer_name));
+    }
+    if let Some(customer_email) = request.customer_email {
+        data.push(("customer_email", customer_email));
+    }
+    if let Some(customer_telephone) = request.customer_telephone {
+        data.push(("customer_telephone", customer_telephone));
+    }
+    if let Some(customer_address) = request.customer_address {
+        data.push(("customer_address", customer_address));
+    }
 
     let res = Client::new()
         .post("https://api.gbprimepay.com/v3/qrcode")
         .header("Content-Type", "application/x-www-form-urlencoded")
-        .body(data)
+        .form(&data)
         .send()
         .await?;
 
