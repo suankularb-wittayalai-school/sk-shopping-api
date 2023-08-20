@@ -73,6 +73,15 @@ async fn main() -> std::io::Result<()> {
             // allow origin for gbprimepay to access webhook
             .allowed_origin("https://api.globalprimepay.com")
             .allowed_origin("https://api.gbprimepay.com")
+            .allowed_origin_fn(|origin, req_head| {
+                // if req_head.method == "POST"  and it is fetching /orders/webhook
+                // allow all origin
+                if req_head.method == "POST" && req_head.uri.path() == "/orders/webhook" {
+                    return true;
+                }
+
+                origin.as_bytes().ends_with(b".skkornor.org")
+            })
             // .allow_any_origin()
             .allowed_methods(vec!["GET", "POST", "PATCH", "DELETE", "PUT"])
             .allowed_headers(vec![
