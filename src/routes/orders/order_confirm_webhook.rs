@@ -1,4 +1,7 @@
+use std::fs::OpenOptions;
+
 use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
+use futures::StreamExt;
 use mysk_lib::models::common::requests::FetchLevel;
 
 use crate::{
@@ -10,16 +13,25 @@ use crate::{
     AppState,
 };
 
+const MAX_SIZE: usize = 262_144;
+
 #[post("/orders/webhook")]
 pub async fn update_order_webhook(
     data: web::Data<AppState>,
     // request: web::Json<GbPrimePayWebHookRequest>,
     request: HttpRequest, // user: OptionalUser,
+    body: web::Bytes,
 ) -> Result<impl Responder, actix_web::Error> {
     let pool: &sqlx::Pool<sqlx::Postgres> = &data.db;
     let credential = &data.smtp_credential;
 
     dbg!(&request);
+
+    dbg!(&body);
+
+    let json_string = std::str::from_utf8(&body).unwrap();
+
+    dbg!(&json_string);
 
     Ok(HttpResponse::Ok().finish())
 
