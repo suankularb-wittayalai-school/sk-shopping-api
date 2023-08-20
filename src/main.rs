@@ -60,28 +60,39 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         let cors = Cors::default()
-            .allowed_origin("http://localhost:3000")
-            .allowed_origin("http://127.0.0.1:3000")
-            .allowed_origin("http://[::1]:3000")
-            .allowed_origin("http://localhost:8000")
-            .allowed_origin("http://localhost")
-            .allowed_origin("https://mysk.school")
-            .allowed_origin("https://mysk.school")
-            .allowed_origin("https://shopping.skkornor.org")
-            .allowed_origin("https://preview.shopping.skkornor.org")
-            .allowed_origin("https://pr.shopping.skkornor.org")
-            // allow origin for gbprimepay to access webhook
-            .allowed_origin("https://api.globalprimepay.com")
-            .allowed_origin("https://api.gbprimepay.com")
             .allowed_origin_fn(|origin, req_head| {
                 // if req_head.method == "POST"  and it is fetching /orders/webhook
                 // allow all origin
-                if req_head.method == "POST" && req_head.uri.path() == "/orders/webhook" {
+                dbg!(&req_head);
+                dbg!(&origin);
+                dbg!(req_head.uri.path() == "/orders/webhook");
+                dbg!(req_head.method.as_str());
+
+                if (req_head.method.as_str() == "POST" || req_head.method.as_str() == "OPTIONS")
+                    && req_head.uri.path() == "/orders/webhook"
+                {
+                    dbg!("allow all origin");
                     return true;
                 }
-
                 origin.as_bytes().ends_with(b".skkornor.org")
+                    || origin.as_bytes().ends_with(b".gbprimepay.com")
+                    || origin.as_bytes().ends_with(b".globalprimepay.com")
+                    || origin.as_bytes().ends_with(b".mysk.school")
+                    || origin.as_bytes().ends_with(b".shopping.skkornor.org")
             })
+            // .allowed_origin("http://localhost:3000")
+            // .allowed_origin("http://127.0.0.1:3000")
+            // .allowed_origin("http://[::1]:3000")
+            // .allowed_origin("http://localhost:8000")
+            // .allowed_origin("http://localhost")
+            // .allowed_origin("https://mysk.school")
+            // .allowed_origin("https://mysk.school")
+            // .allowed_origin("https://shopping.skkornor.org")
+            // .allowed_origin("https://preview.shopping.skkornor.org")
+            // .allowed_origin("https://pr.shopping.skkornor.org")
+            // // allow origin for gbprimepay to access webhook
+            // .allowed_origin("https://api.globalprimepay.com")
+            // .allowed_origin("https://api.gbprimepay.com")
             // .allow_any_origin()
             .allowed_methods(vec!["GET", "POST", "PATCH", "DELETE", "PUT"])
             .allowed_headers(vec![
