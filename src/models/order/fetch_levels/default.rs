@@ -22,7 +22,7 @@ pub struct DefaultOrder {
     pub items: Vec<OrderItem>,
     pub street_address_line_1: Option<String>,
     pub street_address_line_2: Option<String>,
-    pub zip_code: Option<String>,
+    pub zip_code: Option<i64>,
     pub province: Option<String>,
     pub district: Option<String>,
     pub pickup_location: Option<Vec<String>>,
