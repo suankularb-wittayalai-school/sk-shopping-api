@@ -152,6 +152,8 @@ pub fn send_invoice_email(credential: &Credentials, order: Order) -> Result<(), 
         }
     };
 
+    // dbg!(from.clone());
+
     let email = Message::builder()
         .to(to)
         .from(from)
@@ -177,7 +179,8 @@ pub fn send_invoice_email(credential: &Credentials, order: Order) -> Result<(), 
         Ok(_) => Ok(()),
         Err(e) => {
             println!("{:?}", e);
-            Err(Error::MissingFrom)
+            // Err(Error::MissingFrom)
+            Ok(())
         }
     }
 }
@@ -351,7 +354,8 @@ pub fn send_receipt_email(credential: &Credentials, order: Order) -> Result<(), 
         Ok(_) => Ok(()),
         Err(e) => {
             println!("{:?}", e);
-            Err(Error::MissingFrom)
+            // Err(Error::MissingFrom)
+            Ok(())
         }
     }
 }

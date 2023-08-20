@@ -1,6 +1,5 @@
 use actix_web::{patch, web, HttpResponse, Responder};
 use mysk_lib::models::common::requests::FetchLevel;
-use serde::Deserialize;
 
 use crate::{
     models::order::{gbprimpay::GbPrimePayWebHookRequest, Order},
