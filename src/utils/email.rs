@@ -171,9 +171,15 @@ pub fn send_invoice_email(credential: &Credentials, order: Order) -> Result<(), 
         .credentials(credential.clone())
         .build();
 
-    mailer.send(&email);
+    let res = mailer.send(&email);
 
-    Ok(())
+    match res {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            println!("{:?}", e);
+            Err(Error::MissingFrom)
+        }
+    }
 }
 
 pub fn send_receipt_email(credential: &Credentials, order: Order) -> Result<(), Error> {
@@ -339,7 +345,13 @@ pub fn send_receipt_email(credential: &Credentials, order: Order) -> Result<(), 
         .credentials(credential.clone())
         .build();
 
-    mailer.send(&email);
+    let res = mailer.send(&email);
 
-    Ok(())
+    match res {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            println!("{:?}", e);
+            Err(Error::MissingFrom)
+        }
+    }
 }
