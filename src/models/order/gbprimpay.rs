@@ -215,7 +215,7 @@ impl GbPrimePayWebHookRequest {
             r#"
             UPDATE orders
             SET is_paid = true, is_verified = true
-            WHERE ref_id = $2
+            WHERE ref_id = $1
             RETURNING id
             "#,
         )

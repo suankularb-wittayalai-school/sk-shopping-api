@@ -63,15 +63,15 @@ async fn main() -> std::io::Result<()> {
             .allowed_origin_fn(|origin, req_head| {
                 // if req_head.method == "POST"  and it is fetching /orders/webhook
                 // allow all origin
-                dbg!(&req_head);
-                dbg!(&origin);
-                dbg!(req_head.uri.path() == "/orders/webhook");
-                dbg!(req_head.method.as_str());
+                // dbg!(&req_head);
+                // dbg!(&origin);
+                // dbg!(req_head.uri.path() == "/orders/webhook");
+                // dbg!(req_head.method.as_str());
 
                 if (req_head.method.as_str() == "POST" || req_head.method.as_str() == "OPTIONS")
                     && req_head.uri.path() == "/orders/webhook"
                 {
-                    dbg!("allow all origin");
+                    // dbg!("allow all origin");
                     return true;
                 }
                 origin.as_bytes().ends_with(b".skkornor.org")
