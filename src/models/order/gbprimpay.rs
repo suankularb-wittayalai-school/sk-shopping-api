@@ -162,26 +162,27 @@ pub async fn create_qr_code(token: String, order: Order) -> Result<String, reqwe
 
     // let data = serde_urlencoded::to_string(&request).expect("serialize issue");
 
-    let mut data = vec![];
+    let mut data = vec![
+        ("token", request.token),
+        ("amount", request.amount.to_string()),
+        ("referenceNo", request.reference_no),
+        ("backgroundUrl", request.background_url),
+    ];
 
-    data.push(("token", request.token));
-    data.push(("amount", request.amount.to_string()));
-    data.push(("reference_no", request.reference_no));
-    data.push(("background_url", request.background_url));
     if let Some(detail) = request.detail {
         data.push(("detail", detail));
     }
     if let Some(customer_name) = request.customer_name {
-        data.push(("customer_name", customer_name));
+        data.push(("customerName", customer_name));
     }
     if let Some(customer_email) = request.customer_email {
-        data.push(("customer_email", customer_email));
+        data.push(("customerEmail", customer_email));
     }
     if let Some(customer_telephone) = request.customer_telephone {
-        data.push(("customer_telephone", customer_telephone));
+        data.push(("customerTelephone", customer_telephone));
     }
     if let Some(customer_address) = request.customer_address {
-        data.push(("customer_address", customer_address));
+        data.push(("customerAddress", customer_address));
     }
 
     let res = Client::new()
