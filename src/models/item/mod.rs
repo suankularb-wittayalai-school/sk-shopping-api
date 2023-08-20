@@ -88,7 +88,7 @@ impl CompactItem {
         // get amount_sold from order_items
         let amount_sold = sqlx::query(
             r#"
-            SELECT CAST(SUM(amount) as INT8) as amount_sold FROM order_items WHERE item_id = $1
+            SELECT CAST(SUM(amount) as INT8) as amount_sold FROM order_items WHERE item_id = $1 AND order_id IN (SELECT id FROM orders WHERE NOT (shipment_status = 'canceled' OR (created_at > NOW() - INTERVAL '3 minute' AND is_paid = FALSE)))
             "#,
         )
         .bind(item.id)
@@ -146,7 +146,7 @@ impl DefaultItem {
         // get amount_sold from order_items
         let amount_sold = sqlx::query(
             r#"
-            SELECT CAST(SUM(amount) as INT8) as amount_sold FROM order_items WHERE item_id = $1
+            SELECT CAST(SUM(amount) as INT8) as amount_sold FROM order_items WHERE item_id = $1 AND order_id IN (SELECT id FROM orders WHERE NOT (shipment_status = 'canceled' OR (created_at > NOW() - INTERVAL '3 minute' AND is_paid = FALSE)))
             "#,
         )
         .bind(item.id)
@@ -226,7 +226,7 @@ impl DetailedItem {
         // get amount_sold from order_items
         let amount_sold = sqlx::query(
             r#"
-            SELECT CAST(SUM(amount) as INT8) as amount_sold FROM order_items WHERE item_id = $1
+            SELECT CAST(SUM(amount) as INT8) as amount_sold FROM order_items WHERE item_id = $1 AND order_id IN (SELECT id FROM orders WHERE NOT (shipment_status = 'canceled' OR (created_at > NOW() - INTERVAL '3 minute' AND is_paid = FALSE)))
             "#,
         )
         .bind(item.id)

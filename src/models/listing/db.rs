@@ -84,7 +84,7 @@ impl ListingTable {
             item_id,
             SUM(amount) AS amount
           FROM order_items WHERE order_id IN (
-            SELECT id FROM orders WHERE NOT (shipment_status = 'canceled' OR (created_at > NOW() - INTERVAL '1 day' AND is_paid = FALSE))
+            SELECT id FROM orders WHERE NOT (shipment_status = 'canceled' OR (created_at > NOW() - INTERVAL '3 minute' AND is_paid = FALSE))
           )
           GROUP BY item_id
         ) AS amount_agg ON items.id = amount_agg.item_id
@@ -353,7 +353,8 @@ impl ListingTable {
                     SortableListing::Name => query.push_str("name"),
                     SortableListing::CreatedAt => query.push_str("created_at"),
                     SortableListing::Price => query.push_str("price"),
-                    SortableListing::Stock => query.push_str(" lifetime_stock"),
+                    SortableListing::Stock => query.push_str("lifetime_stock"),
+                    SortableListing::Priority => query.push_str("priority"),
                 }
 
                 first = false;

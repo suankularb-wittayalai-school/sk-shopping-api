@@ -13,7 +13,7 @@ pub struct QueryableOrder {
     pub collection_ids: Option<Vec<sqlx::types::Uuid>>,
     pub listing_ids: Option<Vec<sqlx::types::Uuid>>,
     pub item_ids: Option<Vec<sqlx::types::Uuid>>,
-    pub buyer_id: Option<Vec<sqlx::types::Uuid>>,
+    pub buyer_ids: Option<Vec<sqlx::types::Uuid>>,
     pub shipping_status: Option<OrderStatus>,
     pub delivery_type: Option<DeliveryType>,
     pub receiver_name: Option<String>,
@@ -111,7 +111,7 @@ impl CreatableOrder {
             item_id,
             SUM(amount) AS amount
           FROM order_items WHERE order_id IN (
-            SELECT id FROM orders WHERE NOT (shipment_status = 'canceled' OR (created_at > NOW() - INTERVAL '1 day' AND is_paid = FALSE))
+            SELECT id FROM orders WHERE NOT (shipment_status = 'canceled' OR (created_at > NOW() - INTERVAL '3 minute' AND is_paid = FALSE))
           )
           GROUP BY item_id
         ) AS amount_agg ON items.id = amount_agg.item_id

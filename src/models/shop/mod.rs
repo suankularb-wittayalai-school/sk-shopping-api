@@ -110,7 +110,7 @@ impl DetailedShop {
     ) -> Result<Self, sqlx::Error> {
         let listing_ids = sqlx::query(
             r#"
-            SELECT id FROM listings WHERE shop_id = $1
+            SELECT id FROM listings WHERE shop_id = $1 ORDER BY priority DESC
             "#,
         )
         .bind(shop.id)

@@ -75,8 +75,8 @@ pub async fn create_orders(
                         id: Uuid::new_v4().to_string(),
                         code: 400,
                         error_type: "bad_request".to_string(),
-                        detail: err.to_string(),
-                        source: format!("/orders"),
+                        detail: err,
+                        source: "/orders".to_string(),
                     },
                     Some(MetadataType::new(None::<PaginationType>)),
                 );

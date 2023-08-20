@@ -405,14 +405,14 @@ impl OrderTable {
                 params_count += 1;
             }
 
-            if let Some(buyer_id) = &data.buyer_id {
+            if let Some(buyer_ids) = &data.buyer_ids {
                 if query.contains("WHERE") {
                     query.push_str(&format!(" AND buyer_id = ANY(${})", params_count + 1));
                 } else {
                     query.push_str(&format!(" WHERE buyer_id = ANY(${})", params_count + 1));
                 }
 
-                uuid_array_params.push(buyer_id);
+                uuid_array_params.push(buyer_ids);
                 params_count += 1;
             }
 

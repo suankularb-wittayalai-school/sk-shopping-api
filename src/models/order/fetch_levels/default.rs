@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use mysk_lib::models::common::requests::FetchLevel;
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
@@ -13,6 +14,7 @@ use crate::models::{
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DefaultOrder {
     pub id: sqlx::types::Uuid,
+    pub created_at: Option<DateTime<Utc>>,
     pub ref_id: String,
     pub is_paid: bool,
     pub is_verified: bool,
@@ -136,6 +138,7 @@ impl DefaultOrder {
 
         Ok(Self {
             id: order.id,
+            created_at: order.created_at,
             ref_id: order.ref_id,
             is_paid: order.is_paid,
             is_verified: order.is_verified,
