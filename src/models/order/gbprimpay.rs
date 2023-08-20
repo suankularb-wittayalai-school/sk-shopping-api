@@ -191,8 +191,19 @@ pub async fn create_qr_code(token: String, order: Order) -> Result<String, reqwe
         .send()
         .await?;
 
+    dbg!(&res);
+    let encode = res.bytes().await?.to_vec();
+
+    // dbg!(res.status());
+    // dbg!(res.headers());
+    // dbg!(res.text().await?);
+
     // let encoded = base64::encode(res.bytes().await?);
-    let encoded = general_purpose::STANDARD.encode(res.bytes().await?);
+    // let encoded = general_purpose::STANDARD.encode(res.bytes().await?);
+
+    let encoded = general_purpose::STANDARD.encode(encode);
+
+    dbg!(encoded.len());
 
     Ok(encoded)
 }
