@@ -79,6 +79,7 @@ async fn main() -> std::io::Result<()> {
                     || origin.as_bytes().ends_with(b".globalprimepay.com")
                     || origin.as_bytes().ends_with(b".mysk.school")
                     || origin.as_bytes().ends_with(b".shopping.skkornor.org")
+                    || origin.as_bytes().starts_with(b"http://localhost")
             })
             // .allowed_origin("http://localhost:3000")
             // .allowed_origin("http://127.0.0.1:3000")
