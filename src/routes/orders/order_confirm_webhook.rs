@@ -18,7 +18,7 @@ const MAX_SIZE: usize = 262_144;
 #[post("/orders/webhook")]
 pub async fn update_order_webhook(
     data: web::Data<AppState>,
-    request: web::Json<GbPrimePayWebHookRequest>,
+    // request: web::Json<GbPrimePayWebHookRequest>,
     // request: HttpRequest, // user: OptionalUser,
     body: web::Bytes,
 ) -> Result<impl Responder, actix_web::Error> {
@@ -33,49 +33,49 @@ pub async fn update_order_webhook(
         &json_string
     ));
 
-    dbg!(&request);
+    // dbg!(&request);
 
-    // Ok(HttpResponse::Ok().finish())
+    Ok(HttpResponse::Ok().finish())
 
-    let data = request.into_inner();
+    // let data = request.into_inner();
 
-    if data.result_code != ResultCode::Success {
-        return Ok(HttpResponse::Ok().finish());
-    }
+    // if data.result_code != ResultCode::Success {
+    //     return Ok(HttpResponse::Ok().finish());
+    // }
 
-    let res = data.update_order_status(pool).await;
+    // let res = data.update_order_status(pool).await;
 
-    match res {
-        Err(e) => {
-            println!("Error: {}", e);
-            Ok(HttpResponse::InternalServerError().finish())
-        }
-        Ok(order_id) => {
-            let order = Order::get_by_id(
-                pool,
-                order_id,
-                Some(&FetchLevel::Default),
-                Some(&FetchLevel::Compact),
-            )
-            .await;
+    // match res {
+    //     Err(e) => {
+    //         println!("Error: {}", e);
+    //         Ok(HttpResponse::InternalServerError().finish())
+    //     }
+    //     Ok(order_id) => {
+    //         let order = Order::get_by_id(
+    //             pool,
+    //             order_id,
+    //             Some(&FetchLevel::Default),
+    //             Some(&FetchLevel::Compact),
+    //         )
+    //         .await;
 
-            match order {
-                Err(e) => {
-                    println!("Error: {}", e);
-                    Ok(HttpResponse::InternalServerError().finish())
-                }
-                Ok(order) => {
-                    let res = send_receipt_email(credential, order);
+    //         match order {
+    //             Err(e) => {
+    //                 println!("Error: {}", e);
+    //                 Ok(HttpResponse::InternalServerError().finish())
+    //             }
+    //             Ok(order) => {
+    //                 let res = send_receipt_email(credential, order);
 
-                    match res {
-                        Err(e) => {
-                            println!("Error: {}", e);
-                            Ok(HttpResponse::InternalServerError().finish())
-                        }
-                        Ok(_) => Ok(HttpResponse::Ok().finish()),
-                    }
-                }
-            }
-        }
-    }
+    //                 match res {
+    //                     Err(e) => {
+    //                         println!("Error: {}", e);
+    //                         Ok(HttpResponse::InternalServerError().finish())
+    //                     }
+    //                     Ok(_) => Ok(HttpResponse::Ok().finish()),
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 }
