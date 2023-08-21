@@ -2,7 +2,6 @@ use lettre::{
     error::Error, message::header::ContentType, transport::smtp::authentication::Credentials,
     Message, SmtpTransport, Transport,
 };
-use lettre_email::Email;
 
 use crate::models::{item::Item, order::Order};
 
@@ -215,10 +214,10 @@ pub fn send_receipt_email(credential: &Credentials, order: Order) -> Result<(), 
         pickup_location,
         payment_method,
     ) = match order {
-        Order::IdOnly(order) => {
+        Order::IdOnly(_) => {
             return Err(Error::MissingTo);
         }
-        Order::Compact(order) => {
+        Order::Compact(_) => {
             return Err(Error::MissingTo);
         }
         Order::Default(order) => (
