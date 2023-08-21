@@ -33,7 +33,7 @@ pub struct DefaultOrder {
     pub payment_method: PaymentMethod,
     pub payment_slip_url: Option<String>,
     pub promptpay_qr_code_url: Option<String>,
-    pub qr_code_file: Option<String>,
+    // pub qr_code_file: Option<String>,
     pub contact_email: String,
     pub contact_phone_number: Option<String>,
 }
@@ -103,38 +103,38 @@ impl DefaultOrder {
             None
         };
 
-        let promptpay_qr_code_url = match order.payment_method {
-            PaymentMethod::Promptpay => {
-                // get shop promptpay number and make sure it is not null
-                let promptpay_number = sqlx::query(
-                    r#"
-                    SELECT promptpay_number
-                    FROM shops
-                    INNER JOIN listings ON shops.id = listings.shop_id
-                    INNER JOIN items ON listings.id = items.listing_id
-                    INNER JOIN order_items ON items.id = order_items.item_id
-                    WHERE order_items.order_id = $1
-                    "#,
-                )
-                .bind(order.id)
-                .fetch_one(pool)
-                .await?
-                .get::<Option<String>, _>("promptpay_number");
+        // let promptpay_qr_code_url = match order.payment_method {
+        //     PaymentMethod::Promptpay => {
+        //         // get shop promptpay number and make sure it is not null
+        //         let promptpay_number = sqlx::query(
+        //             r#"
+        //             SELECT promptpay_number
+        //             FROM shops
+        //             INNER JOIN listings ON shops.id = listings.shop_id
+        //             INNER JOIN items ON listings.id = items.listing_id
+        //             INNER JOIN order_items ON items.id = order_items.item_id
+        //             WHERE order_items.order_id = $1
+        //             "#,
+        //         )
+        //         .bind(order.id)
+        //         .fetch_one(pool)
+        //         .await?
+        //         .get::<Option<String>, _>("promptpay_number");
 
-                match promptpay_number {
-                    Some(promptpay_number) => {
-                        let promptpay_qr_code_url = format!(
-                            "https://promptpay.io/{}/{}.png",
-                            promptpay_number, order.total_price
-                        );
+        //         match promptpay_number {
+        //             Some(promptpay_number) => {
+        //                 let promptpay_qr_code_url = format!(
+        //                     "https://promptpay.io/{}/{}.png",
+        //                     promptpay_number, order.total_price
+        //                 );
 
-                        Some(promptpay_qr_code_url)
-                    }
-                    None => None,
-                }
-            }
-            _ => None,
-        };
+        //                 Some(promptpay_qr_code_url)
+        //             }
+        //             None => None,
+        //         }
+        //     }
+        //     _ => None,
+        // };
 
         Ok(Self {
             id: order.id,
@@ -156,8 +156,7 @@ impl DefaultOrder {
             total_price: order.total_price,
             payment_method: order.payment_method,
             payment_slip_url: order.payment_slip_url,
-            promptpay_qr_code_url,
-            qr_code_file: order.qr_code_file,
+            promptpay_qr_code_url: order.qr_code_file,
             contact_email: order.contact_email,
             contact_phone_number: order.contact_phone_number,
         })

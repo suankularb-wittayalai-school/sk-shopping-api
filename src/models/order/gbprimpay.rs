@@ -203,6 +203,7 @@ pub async fn create_qr_code(token: String, order: Order) -> Result<String, reqwe
     // let encoded = general_purpose::STANDARD.encode(res.bytes().await?);
 
     let encoded = general_purpose::STANDARD.encode(encode);
+    let encoded = format!("data:image/png;base64,{}", encoded);
 
     // dbg!(encoded.len());
 

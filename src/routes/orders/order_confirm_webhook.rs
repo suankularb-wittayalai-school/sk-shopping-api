@@ -20,18 +20,12 @@ pub async fn update_order_webhook(
     data: web::Data<AppState>,
     request: web::Json<GbPrimePayWebHookRequest>,
     // request: HttpRequest, // user: OptionalUser,
-    body: web::Bytes,
+    // body: web::Bytes,
 ) -> Result<impl Responder, actix_web::Error> {
     let pool: &sqlx::Pool<sqlx::Postgres> = &data.db;
     let credential = &data.smtp_credential;
 
-    let json_string = std::str::from_utf8(&body).unwrap();
-
-    dbg!(&json_string);
-
-    dbg!(serde_json::from_str::<GbPrimePayWebHookRequest>(
-        &json_string
-    ));
+    // let json_string = std::str::from_utf8(&body).unwrap();
 
     // dbg!(&request);
 
