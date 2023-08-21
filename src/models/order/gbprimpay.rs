@@ -69,7 +69,7 @@ impl<'de> Deserialize<'de> for ResultCode {
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GbPrimePayWebHookRequest {
-    pub amount: i64,
+    pub amount: f64,
     pub reference_no: String,
     pub gbp_reference_no: String,
     pub result_code: ResultCode,
