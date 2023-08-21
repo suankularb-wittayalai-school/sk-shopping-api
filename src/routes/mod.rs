@@ -1,6 +1,6 @@
 use actix_web::web;
-use utoipa::OpenApi;
-use utoipa_swagger_ui::SwaggerUi;
+// use utoipa::OpenApi;
+// use utoipa_swagger_ui::SwaggerUi;
 
 pub(crate) mod auth;
 pub(crate) mod category;
@@ -12,7 +12,7 @@ pub(crate) mod listings;
 pub(crate) mod orders;
 pub(crate) mod shops;
 
-use doc::ApiDoc;
+// use doc::ApiDoc;
 
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(health::health_check);
@@ -56,7 +56,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(orders::order_confirm_webhook::update_order_webhook);
 
     cfg.service(category::all_categories::all_categories);
-    cfg.service(
-        SwaggerUi::new("/swagger-ui/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
-    );
+    // cfg.service(
+    //     SwaggerUi::new("/swagger-ui/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
+    // );
 }

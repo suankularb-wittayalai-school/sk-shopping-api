@@ -1,13 +1,13 @@
 use actix_web::{get, web, HttpResponse, Responder};
 
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+// use utoipa::ToSchema;
 
 use mysk_lib::models::common::response::ResponseType;
 
 use crate::AppState;
 
-#[derive(Serialize, Deserialize, ToSchema)]
+#[derive(Serialize, Deserialize)]
 pub struct HealthCheckResponse {
     server_time: String,
     database_connection: bool,
@@ -31,14 +31,14 @@ impl HealthCheckResponse {
     }
 }
 
-#[utoipa::path(
-    responses(
-        (status=200, body=HealthCheckResponse, description="The server is healthy"),
-        (status=500, body=String, description="The server is not healthy")
-    ),
-    path="/health-check",
-    tag="Global"
-)]
+// #[utoipa::path(
+//     responses(
+//         (status=200, body=HealthCheckResponse, description="The server is healthy"),
+//         (status=500, body=String, description="The server is not healthy")
+//     ),
+//     path="/health-check",
+//     tag="Global"
+// )]
 #[get("/health-check")]
 pub async fn health_check(data: web::Data<AppState>) -> impl Responder {
     let pool = &data.db;
