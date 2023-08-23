@@ -130,6 +130,8 @@ pub enum PaymentMethod {
     Cod,
     Promptpay,
     // Kplus,
+    #[serde(rename = "pos_cash")]
+    POSCash,
 }
 
 impl Display for PaymentMethod {
@@ -137,6 +139,7 @@ impl Display for PaymentMethod {
         let s = match self {
             Self::Cod => "cod",
             Self::Promptpay => "promptpay",
+            Self::POSCash => "pos_cash",
             // Self::Kplus => "mobile_banking_kbank",
         };
         write!(f, "{}", s)
@@ -169,6 +172,7 @@ impl sqlx::Decode<'_, sqlx::Postgres> for PaymentMethod {
             "cod" => Ok(Self::Cod),
             "promptpay" => Ok(Self::Promptpay),
             // "kplus" => Ok(Self::Kplus),
+            "pos_cash" => Ok(Self::POSCash),
             _ => Err("invalid payment method".into()),
         }
     }
