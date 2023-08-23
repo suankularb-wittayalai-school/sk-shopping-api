@@ -105,12 +105,12 @@ impl ShopTable {
             if let Some(collection_ids) = &data.collection_ids {
                 if query.contains("WHERE") {
                     query.push_str(&format!(
-                        " AND shop_id IN (SELECT shop_id FROM collections WHERE id = ANY(${}))",
+                        " AND id IN (SELECT shop_id FROM collections WHERE id = ANY(${}))",
                         params_count + 1
                     ));
                 } else {
                     query.push_str(&format!(
-                        " WHERE shop_id IN (SELECT shop_id FROM collections WHERE id = ANY(${}))",
+                        " WHERE id IN (SELECT shop_id FROM collections WHERE id = ANY(${}))",
                         params_count + 1
                     ));
                 }
@@ -122,12 +122,12 @@ impl ShopTable {
             if let Some(listing_ids) = &data.listing_ids {
                 if query.contains("WHERE") {
                     query.push_str(&format!(
-                        " AND shop_id IN (SELECT shop_id FROM listings WHERE id = ANY(${}))",
+                        " AND id IN (SELECT shop_id FROM listings WHERE id = ANY(${}))",
                         params_count + 1
                     ));
                 } else {
                     query.push_str(&format!(
-                        " WHERE shop_id IN (SELECT shop_id FROM listings WHERE id = ANY(${}))",
+                        " WHERE id IN (SELECT shop_id FROM listings WHERE id = ANY(${}))",
                         params_count + 1
                     ));
                 }
@@ -139,12 +139,12 @@ impl ShopTable {
             if let Some(item_ids) = &data.item_ids {
                 if query.contains("WHERE") {
                     query.push_str(&format!(
-                        " AND shop_id IN (SELECT shop_id FROM listings WHERE id IN (SELECT listing_id FROM items WHERE id = ANY(${})))",
+                        " AND id IN (SELECT shop_id FROM listings WHERE id IN (SELECT listing_id FROM items WHERE id = ANY(${})))",
                         params_count + 1
                     ));
                 } else {
                     query.push_str(&format!(
-                        " WHERE shop_id IN (SELECT shop_id FROM listings WHERE id IN (SELECT listing_id FROM items WHERE id = ANY(${})))",
+                        " WHERE id IN (SELECT shop_id FROM listings WHERE id IN (SELECT listing_id FROM items WHERE id = ANY(${})))",
                         params_count + 1
                     ));
                 }
@@ -156,12 +156,12 @@ impl ShopTable {
             if let Some(manager_ids) = &data.manager_ids {
                 if query.contains("WHERE") {
                     query.push_str(&format!(
-                        " AND shop_id IN (SELECT shop_id FROM shop_managers WHERE user_id = ANY(${}))",
+                        " AND id IN (SELECT shop_id FROM shop_managers WHERE user_id = ANY(${}))",
                         params_count + 1
                     ));
                 } else {
                     query.push_str(&format!(
-                        " WHERE shop_id IN (SELECT shop_id FROM shop_managers WHERE user_id = ANY(${}))",
+                        " WHERE id IN (SELECT shop_id FROM shop_managers WHERE user_id = ANY(${}))",
                         params_count + 1
                     ));
                 }
