@@ -167,7 +167,7 @@ pub fn send_invoice_email(credential: &Credentials, order: Order) -> Result<(), 
         }
     };
 
-    let mailer = SmtpTransport::relay("smtp.gmail.com")
+    let mailer = SmtpTransport::relay("smtp-relay.sendinblue.com")
         .unwrap()
         .credentials(credential.clone())
         .build();
@@ -342,7 +342,7 @@ pub fn send_receipt_email(credential: &Credentials, order: Order) -> Result<(), 
         }
     };
 
-    let mailer = SmtpTransport::relay("smtp.gmail.com")
+    let mailer = SmtpTransport::relay("smtp-relay.sendinblue.com")
         .unwrap()
         .credentials(credential.clone())
         .build();
