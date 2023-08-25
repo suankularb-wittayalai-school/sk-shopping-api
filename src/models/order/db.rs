@@ -273,7 +273,10 @@ impl OrderTable {
         if let Some(q) = &filter.q {
             if query.contains("WHERE") {
                 query.push_str(&format!(
-                    " AND (street_address_line_1 ILIKE ${} OR street_address_line_2 ILIKE ${} OR province ILIKE ${} OR district ILIKE ${} OR receiver_name ILIKE ${})",
+                    " AND (street_address_line_1 ILIKE ${} OR street_address_line_2 ILIKE ${} OR province ILIKE ${} OR district ILIKE ${} OR receiver_name ILIKE ${} OR ref_id ILIKE ${} OR contact_email ILIKE ${} OR contact_phone_number ILIKE ${})",
+                    params_count + 1,
+                    params_count + 1,
+                    params_count + 1,
                     params_count + 1,
                     params_count + 1,
                     params_count + 1,
@@ -282,7 +285,10 @@ impl OrderTable {
                 ));
             } else {
                 query.push_str(&format!(
-                    " WHERE (street_address_line_1 ILIKE ${} OR street_address_line_2 ILIKE ${} OR province ILIKE ${} OR district ILIKE ${} OR receiver_name ILIKE ${})",
+                    " WHERE (street_address_line_1 ILIKE ${} OR street_address_line_2 ILIKE ${} OR province ILIKE ${} OR district ILIKE ${} OR receiver_name ILIKE ${} OR ref_id ILIKE ${} OR contact_email ILIKE ${} OR contact_phone_number ILIKE ${})",
+                    params_count + 1,
+                    params_count + 1,
+                    params_count + 1,
                     params_count + 1,
                     params_count + 1,
                     params_count + 1,
