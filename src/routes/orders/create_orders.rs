@@ -9,6 +9,7 @@ use crate::{
     models::{
         auth::user::{OptionalUser, User},
         order::{
+            db::DeliveryType,
             request::{CreatableOrder, QueryableOrder, SortableOrder},
             Order,
         },

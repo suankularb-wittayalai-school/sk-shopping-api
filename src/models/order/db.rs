@@ -82,6 +82,8 @@ impl sqlx::Decode<'_, sqlx::Postgres> for OrderStatus {
 pub enum DeliveryType {
     SchoolPickup,
     Delivery,
+    #[serde(rename = "pos")]
+    POS,
 }
 
 impl Display for DeliveryType {
@@ -89,6 +91,7 @@ impl Display for DeliveryType {
         let s = match self {
             Self::SchoolPickup => "pick_up",
             Self::Delivery => "delivery",
+            Self::POS => "pos",
         };
         write!(f, "{}", s)
     }
@@ -119,6 +122,7 @@ impl sqlx::Decode<'_, sqlx::Postgres> for DeliveryType {
         match s.as_str() {
             "pick_up" => Ok(Self::SchoolPickup),
             "delivery" => Ok(Self::Delivery),
+            "pos" => Ok(Self::POS),
             _ => Err("invalid delivery type".into()),
         }
     }

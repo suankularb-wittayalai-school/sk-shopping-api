@@ -51,7 +51,7 @@ pub struct ItemAmount {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreatableOrder {
     items: Vec<ItemAmount>,
-    delivery_type: DeliveryType,
+    pub delivery_type: DeliveryType,
     address: Option<Address>,
     receiver_name: String,
     payment_method: PaymentMethod,
@@ -162,7 +162,7 @@ impl CreatableOrder {
 
         let shipping_fee = match &self.delivery_type {
             DeliveryType::Delivery => 70,
-            DeliveryType::SchoolPickup => 0,
+            _ => 0,
         };
 
         let (street_address_line_1, street_address_line_2, province, district, zip_code) =
