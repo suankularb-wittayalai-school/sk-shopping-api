@@ -369,6 +369,17 @@ impl OrderTable {
                 params_count += 1;
             }
 
+            if let Some(ref_id) = &data.ref_id {
+                if query.contains("WHERE") {
+                    query.push_str(&format!(" AND ref_id ILIKE ${}", params_count + 1));
+                } else {
+                    query.push_str(&format!(" WHERE ref_id ILIKE ${}", params_count + 1));
+                }
+
+                string_params.push(format!("%{}%", ref_id));
+                params_count += 1;
+            }
+
             if let Some(id) = data.id {
                 if query.contains("WHERE") {
                     query.push_str(&format!(" AND id = ${}", params_count + 1));
@@ -430,11 +441,11 @@ impl OrderTable {
                 params_count += 1;
             }
 
-            if let Some(order_status) = data.shipping_status {
+            if let Some(order_status) = data.shipment_status {
                 if query.contains("WHERE") {
-                    query.push_str(&format!(" AND shipping_status = ${}", params_count + 1));
+                    query.push_str(&format!(" AND shipment_status = ${}", params_count + 1));
                 } else {
-                    query.push_str(&format!(" WHERE shipping_status = ${}", params_count + 1));
+                    query.push_str(&format!(" WHERE shipment_status = ${}", params_count + 1));
                 }
 
                 order_status_params.push(order_status);
@@ -611,6 +622,8 @@ impl OrderTable {
         // Pagination
         let (_params_count, pagination_params) =
             Self::append_limit_clause(&mut query, pagination, params_count);
+
+        dbg!(query.as_str());
 
         let mut query_builder = sqlx::query_as::<_, Self>(&query);
 
