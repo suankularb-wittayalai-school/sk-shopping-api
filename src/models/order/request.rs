@@ -159,6 +159,40 @@ impl CreatableOrder {
             .await?;
 
             total_price += item_db.get::<i64, _>("price") * item.amount;
+
+            // if listing in the order is hidden, make sure that user is a shop manager
+            let listing = sqlx::query(
+                r#"
+                SELECT is_hidden
+                FROM listings
+                INNER JOIN items ON listings.id = items.listing_id
+                WHERE items.id = $1
+                "#,
+            )
+            .bind(item.item_id)
+            .fetch_one(transaction.as_mut())
+            .await?;
+
+            if listing.get::<bool, _>("is_hidden") {
+                let is_shop_manager = sqlx::query(
+                    r#"
+                    SELECT EXISTS (
+                        SELECT 1
+                        FROM shop_managers
+                        WHERE shop_id = $1 AND user_id = $2
+                    )
+                    "#,
+                )
+                .bind(shop_id)
+                .bind(user_id)
+                .fetch_one(transaction.as_mut())
+                .await?
+                .get::<bool, _>("exists");
+
+                if !is_shop_manager {
+                    return Err(sqlx::Error::RowNotFound);
+                }
+            }
         }
 
         let shipping_fee = match &self.delivery_type {

@@ -81,6 +81,7 @@ async fn main() -> std::io::Result<()> {
                     || origin.as_bytes().ends_with(b".shopping.skkornor.org")
                     // allow localhost for development
                     || origin.as_bytes() == b"http://localhost:3000"
+                    || origin.as_bytes() == b"http://localhost:3001"
                     || origin.as_bytes() == b"http://localhost:8000"
                     || origin.as_bytes() == b"http://localhost"
                 // || origin.as_bytes().starts_with(b"http://localhost")
